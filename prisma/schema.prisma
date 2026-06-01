@@ -1,0 +1,57 @@
+// TimeFlow — single-user local time management app.
+// SQLite via Prisma. No native enums in SQLite, so `status` is a String
+// constrained to NEW | PENDING | DELAYED | CANCELLED | COMPLETED in the
+// domain/validation layer (see lib/domain).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String
+  color     String // hex, e.g. #3b82f6
+  createdAt DateTime @default(now())
+
+  tasks Task[]
+}
+
+model Task {
+  id          String  @id @default(cuid())
+  categoryId  String?
+  description String
+
+  // NEW | PENDING | DELAYED | CANCELLED | COMPLETED
+  status String @default("NEW")
+
+  // Card position + height derive from these (local time, no tz conversion).
+  plannedStart DateTime
+  plannedEnd   DateTime
+
+  // The two delay counters are tracked SEPARATELY and never merged.
+  dragDelayCount Int @default(0) // manual drag to a later slot
+  autoDelayCount Int @default(0) // end time passed with no clock-in
+
+  // True once the task has >= 1 clock-in OR is completed. Disables dragging.
+  isLocked Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  category      Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  clockSessions ClockSession[]
+}
+
+model ClockSession {
+  id         String    @id @default(cuid())
+  taskId     String
+  clockInAt  DateTime
+  clockOutAt DateTime? // null while a session is running
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
