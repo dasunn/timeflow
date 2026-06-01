@@ -1,6 +1,11 @@
 "use client";
 
-import { ArrowDownIcon, AlarmClockOffIcon } from "lucide-react";
+import { useDraggable } from "@dnd-kit/core";
+import {
+  AlarmClockOffIcon,
+  ArrowDownIcon,
+  LockIcon,
+} from "lucide-react";
 import { useNow } from "@/components/now-context";
 import { hasAnyClockIn } from "@/lib/domain/clock";
 import { computeDisplayStatus } from "@/lib/domain/status";
@@ -32,23 +37,37 @@ export function TaskCard({ task, lane, lanes }: LaidOutTask) {
   const clockedIn = hasAnyClockIn(task.clockSessions);
   const status = computeDisplayStatus(task, now, clockedIn);
   const meta = STATUS_META[status];
+  const locked = task.isLocked;
+
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({ id: task.id, data: { task }, disabled: locked });
 
   const top = topPx(task.plannedStart);
   const height = heightPx(task.plannedStart, task.plannedEnd);
   const widthPct = 100 / lanes;
   const leftPct = lane * widthPct;
   const accent = task.category?.color ?? "var(--muted-foreground)";
-
   const terminal = status === "CANCELLED" || status === "COMPLETED";
 
   return (
     <div
-      className="absolute z-0 p-px"
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      className={cn(
+        "absolute z-0 p-px outline-none",
+        locked ? "cursor-not-allowed" : "cursor-grab",
+        isDragging && "z-50 cursor-grabbing",
+      )}
       style={{
         top,
         height,
         left: `${leftPct}%`,
         width: `${widthPct}%`,
+        touchAction: "none",
+        transform: transform
+          ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
+          : undefined,
       }}
     >
       <div
@@ -56,6 +75,7 @@ export function TaskCard({ task, lane, lanes }: LaidOutTask) {
           "flex h-full flex-col overflow-hidden rounded-md border bg-card px-1.5 py-1 text-xs shadow-sm",
           status === "DELAYED" && "ring-1 ring-amber-300 dark:ring-amber-800",
           terminal && "opacity-70",
+          isDragging && "shadow-lg ring-2 ring-ring",
         )}
         style={{ borderLeftColor: accent, borderLeftWidth: 4 }}
       >
@@ -63,13 +83,16 @@ export function TaskCard({ task, lane, lanes }: LaidOutTask) {
           <span className="truncate text-[10px] leading-tight text-muted-foreground tabular-nums">
             {formatTimeRange(task.plannedStart, task.plannedEnd)}
           </span>
-          <span
-            className={cn(
-              "shrink-0 rounded px-1 text-[9px] leading-tight font-medium",
-              meta.badge,
-            )}
-          >
-            {meta.label}
+          <span className="flex shrink-0 items-center gap-1">
+            {locked && <LockIcon className="size-2.5 text-muted-foreground" />}
+            <span
+              className={cn(
+                "rounded px-1 text-[9px] leading-tight font-medium",
+                meta.badge,
+              )}
+            >
+              {meta.label}
+            </span>
           </span>
         </div>
 

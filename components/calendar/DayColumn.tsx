@@ -1,8 +1,10 @@
 "use client";
 
+import { useDroppable } from "@dnd-kit/core";
 import { useNow } from "@/components/now-context";
 import { DAY_HEIGHT_PX, isSameDay, topPx } from "@/lib/domain/time";
 import type { TaskWithRelations } from "@/lib/domain/types";
+import { cn } from "@/lib/utils";
 import { slotLinesStyle, MIN_COL_PX } from "./grid";
 import { layoutDayTasks } from "./layout";
 import { TaskCard } from "./TaskCard";
@@ -18,9 +20,18 @@ export function DayColumn({
   const laid = layoutDayTasks(tasks);
   const isToday = isSameDay(day, now);
 
+  const { setNodeRef, isOver } = useDroppable({
+    id: `day-${day.getTime()}`,
+    data: { day },
+  });
+
   return (
     <div
-      className="relative flex-1 border-l border-border"
+      ref={setNodeRef}
+      className={cn(
+        "relative flex-1 border-l border-border",
+        isOver && "bg-accent/40",
+      )}
       style={{ height: DAY_HEIGHT_PX, minWidth: MIN_COL_PX, ...slotLinesStyle }}
     >
       {laid.map((item) => (

@@ -58,18 +58,16 @@ export function dateAtMinutes(day: Date, minutes: number): Date {
   return addMinutes(startOfDay(day), minutes);
 }
 
-// Given an old start, a target day, and a vertical pixel delta from a drag,
-// compute the snapped new start, clamped so the task fits within the day.
-export function startFromDrag(
-  oldStart: Date,
-  oldEnd: Date,
+// Given a target day and the dragged card's pixel offset from the top of the
+// day column, compute the snapped new start, clamped so the task still fits
+// within the day.
+export function startFromOffsetPx(
   targetDay: Date,
-  deltaYpx: number,
+  offsetTopPx: number,
+  durationMin: number,
 ): Date {
-  const duration = durationMinutes(oldStart, oldEnd);
-  const newTopPx = topPx(oldStart) + deltaYpx;
-  let minutes = snapMinutes((newTopPx / SLOT_HEIGHT_PX) * SLOT_MINUTES);
-  minutes = Math.max(0, Math.min(minutes, MINUTES_PER_DAY - duration));
+  let minutes = snapMinutes((offsetTopPx / SLOT_HEIGHT_PX) * SLOT_MINUTES);
+  minutes = Math.max(0, Math.min(minutes, MINUTES_PER_DAY - durationMin));
   return dateAtMinutes(targetDay, minutes);
 }
 
