@@ -11,7 +11,12 @@ import type { TaskWithRelations } from "@/lib/domain/types";
 import { cn } from "@/lib/utils";
 import type { LaidOutTask } from "./layout";
 
-export function TaskCard({ task, lane, lanes }: LaidOutTask) {
+export function TaskCard({
+  task,
+  lane,
+  lanes,
+  onOpenDetails,
+}: LaidOutTask & { onOpenDetails?: (taskId: string) => void }) {
   const now = useNow();
   const clockedIn = hasAnyClockIn(task.clockSessions);
   const status = computeDisplayStatus(task, now, clockedIn);
@@ -33,9 +38,10 @@ export function TaskCard({ task, lane, lanes }: LaidOutTask) {
       ref={setNodeRef}
       {...listeners}
       {...attributes}
+      onClick={() => onOpenDetails?.(task.id)}
       className={cn(
         "absolute z-0 p-px outline-none",
-        locked ? "cursor-not-allowed" : "cursor-grab",
+        locked ? "cursor-pointer" : "cursor-grab",
         isDragging && "z-50 cursor-grabbing",
       )}
       style={{

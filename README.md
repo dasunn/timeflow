@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TimeFlow
 
-## Getting Started
+A single-user, local personal time-management app — a weekly calendar where you
+plan tasks, drag them around, and clock real time against them. MVP built to
+validate the idea; runs entirely on your machine with one SQLite file.
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** (App Router, Server Actions) + TypeScript
+- **Prisma 6** + **SQLite** (`prisma/dev.db`)
+- **Tailwind CSS v4** + **shadcn/ui** + lucide-react
+- **dnd-kit** for drag-and-drop, **date-fns**, **react-hook-form** + **zod**
+
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npx prisma migrate dev      # creates dev.db, applies migrations, seeds
+npm run dev                 # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`npx prisma migrate dev` runs the seed automatically. To reseed later:
+`npm run seed`. To reset the DB: `npm run db:reset`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Weekly calendar** (Mon–Sun, 30-min grid) with prev/next/this-week nav.
+  Cards are positioned and sized by their planned start/end.
+- **Drag to reschedule** (snaps to 30-min slots). Dragging to a *later* slot
+  increments a **drag-delay** counter; dragging earlier never changes it.
+- **Auto-overdue**: when a task's end passes with no clock-in, a separate
+  **auto-delay** counter is bumped once. The two counters are tracked and shown
+  independently — never merged.
+- **Now panel**: clock in / out (multiple cycles accumulate), live timer, and
+  Complete once clocked out.
+- **Locking**: once a task is clocked in or completed it can no longer be
+  dragged.
+- **Click any empty slot** to create a task; **click a card** for details —
+  edit/add/delete time sessions, or cancel/reopen.
+- **Categories** (`/categories`): name + color, used to color-code cards.
 
-## Learn More
+## Project layout
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `lib/domain/` — core logic (status engine, delay rules, time/grid math)
+- `lib/actions/` — server actions (tasks, clock sessions, categories, maintenance)
+- `components/calendar/` — calendar grid, drag, day columns, cards
+- `components/now-panel/` — the live Now panel
+- `prisma/` — schema, migrations, seed

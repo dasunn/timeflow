@@ -69,3 +69,23 @@ export async function moveTask(
   revalidatePath("/");
   return { ok: true };
 }
+
+// Explicit Cancel — removes the task from the active flow but keeps the row.
+export async function cancelTask(taskId: string): Promise<ActionResult> {
+  await prisma.task.update({
+    where: { id: taskId },
+    data: { status: "CANCELLED" },
+  });
+  revalidatePath("/");
+  return { ok: true };
+}
+
+// Undo a cancel (back to NEW). Display status is re-derived from there.
+export async function reopenTask(taskId: string): Promise<ActionResult> {
+  await prisma.task.update({
+    where: { id: taskId },
+    data: { status: "NEW" },
+  });
+  revalidatePath("/");
+  return { ok: true };
+}

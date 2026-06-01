@@ -6,6 +6,9 @@ import { getCategories } from "@/lib/data";
 
 export const metadata = { title: "Categories · TimeFlow" };
 
+// Always reflect the live local database (no build-time prerender snapshot).
+export const dynamic = "force-dynamic";
+
 export default async function CategoriesPage() {
   const categories = await getCategories();
 

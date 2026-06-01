@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { CreateTaskDialog } from "@/components/CreateTaskDialog";
+import { TaskDetailsDialog } from "@/components/TaskDetailsDialog";
 import { NowProvider, useNow } from "@/components/now-context";
 import { NowPanel } from "@/components/now-panel/NowPanel";
 import { moveTask } from "@/lib/actions/tasks";
@@ -78,6 +79,7 @@ export function CalendarWorkspace({
     day: Date;
     startMinutes: number;
   } | null>(null);
+  const [detailsTaskId, setDetailsTaskId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
   // Re-sync to server truth whenever fresh data arrives (after router.refresh).
@@ -128,6 +130,10 @@ export function CalendarWorkspace({
     tasks.filter((t) => isSameDay(t.plannedStart, d)),
   );
 
+  const detailsTask = detailsTaskId
+    ? (tasks.find((t) => t.id === detailsTaskId) ?? null)
+    : null;
+
   return (
     <NowProvider initial={serverNow}>
       <div className="flex min-h-0 flex-1">
@@ -138,7 +144,14 @@ export function CalendarWorkspace({
           modifiers={[snapToSlotY, restrictToWindowEdges]}
           onDragEnd={handleDragEnd}
         >
-          <div className="min-w-0 flex-1 overflow-auto">
+          <div className="relative min-w-0 flex-1 overflow-auto">
+            {tasks.length === 0 && (
+              <div className="pointer-events-none absolute inset-x-0 top-28 z-20 flex justify-center px-4">
+                <span className="rounded-md border bg-background/90 px-3 py-2 text-sm text-muted-foreground shadow-sm">
+                  No tasks this week — click any empty time slot to add one.
+                </span>
+              </div>
+            )}
             <div
               className="w-full"
               style={{ minWidth: GUTTER_PX + 7 * MIN_COL_PX }}
@@ -165,6 +178,7 @@ export function CalendarWorkspace({
                     onCreate={(day, startMinutes) =>
                       setCreateTarget({ day, startMinutes })
                     }
+                    onOpenDetails={setDetailsTaskId}
                   />
                 ))}
               </div>
@@ -180,6 +194,13 @@ export function CalendarWorkspace({
           target={createTarget}
           categories={categories}
           onClose={() => setCreateTarget(null)}
+        />
+      )}
+
+      {detailsTask && (
+        <TaskDetailsDialog
+          task={detailsTask}
+          onClose={() => setDetailsTaskId(null)}
         />
       )}
     </NowProvider>

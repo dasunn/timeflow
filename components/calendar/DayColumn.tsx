@@ -20,10 +20,12 @@ export function DayColumn({
   day,
   tasks,
   onCreate,
+  onOpenDetails,
 }: {
   day: Date;
   tasks: TaskWithRelations[];
   onCreate: (day: Date, startMinutes: number) => void;
+  onOpenDetails: (taskId: string) => void;
 }) {
   const now = useNow();
   const laid = layoutDayTasks(tasks);
@@ -59,7 +61,7 @@ export function DayColumn({
       style={{ height: DAY_HEIGHT_PX, minWidth: MIN_COL_PX, ...slotLinesStyle }}
     >
       {laid.map((item) => (
-        <TaskCard key={item.task.id} {...item} />
+        <TaskCard key={item.task.id} {...item} onOpenDetails={onOpenDetails} />
       ))}
 
       {isToday && (
