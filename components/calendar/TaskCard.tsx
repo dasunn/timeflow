@@ -1,36 +1,15 @@
 "use client";
 
 import { useDraggable } from "@dnd-kit/core";
-import {
-  AlarmClockOffIcon,
-  ArrowDownIcon,
-  LockIcon,
-} from "lucide-react";
+import { AlarmClockOffIcon, ArrowDownIcon, LockIcon } from "lucide-react";
 import { useNow } from "@/components/now-context";
+import { STATUS_META } from "@/components/status-meta";
 import { hasAnyClockIn } from "@/lib/domain/clock";
 import { computeDisplayStatus } from "@/lib/domain/status";
 import { formatTimeRange, heightPx, topPx } from "@/lib/domain/time";
-import type { TaskStatus, TaskWithRelations } from "@/lib/domain/types";
+import type { TaskWithRelations } from "@/lib/domain/types";
 import { cn } from "@/lib/utils";
 import type { LaidOutTask } from "./layout";
-
-const STATUS_META: Record<TaskStatus, { label: string; badge: string }> = {
-  NEW: { label: "New", badge: "bg-secondary text-secondary-foreground" },
-  PENDING: {
-    label: "Pending",
-    badge: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
-  },
-  DELAYED: {
-    label: "Delayed",
-    badge: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
-  },
-  CANCELLED: { label: "Cancelled", badge: "bg-muted text-muted-foreground" },
-  COMPLETED: {
-    label: "Done",
-    badge:
-      "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
-  },
-};
 
 export function TaskCard({ task, lane, lanes }: LaidOutTask) {
   const now = useNow();
@@ -88,7 +67,7 @@ export function TaskCard({ task, lane, lanes }: LaidOutTask) {
             <span
               className={cn(
                 "rounded px-1 text-[9px] leading-tight font-medium",
-                meta.badge,
+                meta.className,
               )}
             >
               {meta.label}

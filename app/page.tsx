@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { format } from "date-fns";
 import { ChevronLeftIcon, ChevronRightIcon, SettingsIcon } from "lucide-react";
+import { CalendarWorkspace } from "@/components/calendar/CalendarWorkspace";
 import { buttonVariants } from "@/components/ui/button";
-import { WeekCalendar } from "@/components/calendar/WeekCalendar";
-import { getTasksForWeek } from "@/lib/data";
+import { getNowPanelTasks, getTasksForWeek } from "@/lib/data";
 import { addDays, weekDays, weekStart } from "@/lib/domain/time";
 import { cn } from "@/lib/utils";
 
@@ -24,8 +24,13 @@ export default async function Home({
   const anchor = parseAnchor(date);
   const start = weekStart(anchor);
   const days = weekDays(anchor);
-  const tasks = await getTasksForWeek(anchor);
-  const serverNow = Date.now();
+  const now = new Date();
+
+  const [weekTasks, nowTasks] = await Promise.all([
+    getTasksForWeek(anchor),
+    getNowPanelTasks(now),
+  ]);
+  const serverNow = now.getTime();
 
   const prev = format(addDays(start, -7), "yyyy-MM-dd");
   const next = format(addDays(start, 7), "yyyy-MM-dd");
@@ -72,14 +77,12 @@ export default async function Home({
         </Link>
       </header>
 
-      <div className="flex min-h-0 flex-1">
-        <WeekCalendar days={days} tasks={tasks} serverNow={serverNow} />
-        <aside className="hidden w-80 shrink-0 border-l lg:block">
-          <div className="p-4 text-sm text-muted-foreground">
-            Now panel — coming in Phase 5.
-          </div>
-        </aside>
-      </div>
+      <CalendarWorkspace
+        days={days}
+        weekTasks={weekTasks}
+        nowTasks={nowTasks}
+        serverNow={serverNow}
+      />
     </div>
   );
 }

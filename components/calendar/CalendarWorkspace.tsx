@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { NowProvider, useNow } from "@/components/now-context";
+import { NowPanel } from "@/components/now-panel/NowPanel";
 import { moveTask } from "@/lib/actions/tasks";
 import {
   durationMinutes,
@@ -57,21 +58,23 @@ function DayHeader({ day }: { day: Date }) {
   );
 }
 
-export function WeekCalendar({
+export function CalendarWorkspace({
   days,
-  tasks: propTasks,
+  weekTasks,
+  nowTasks,
   serverNow,
 }: {
   days: Date[];
-  tasks: TaskWithRelations[];
+  weekTasks: TaskWithRelations[];
+  nowTasks: TaskWithRelations[];
   serverNow: number;
 }) {
   const router = useRouter();
-  const [tasks, setTasks] = useState(propTasks);
+  const [tasks, setTasks] = useState(weekTasks);
   const [, startTransition] = useTransition();
 
   // Re-sync to server truth whenever fresh data arrives (after router.refresh).
-  useEffect(() => setTasks(propTasks), [propTasks]);
+  useEffect(() => setTasks(weekTasks), [weekTasks]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -120,35 +123,43 @@ export function WeekCalendar({
 
   return (
     <NowProvider initial={serverNow}>
-      <DndContext
-        sensors={sensors}
-        collisionDetection={pointerWithin}
-        modifiers={[snapToSlotY, restrictToWindowEdges]}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="min-w-0 flex-1 overflow-auto">
-          <div className="w-full" style={{ minWidth: GUTTER_PX + 7 * MIN_COL_PX }}>
-            {/* Sticky day headers */}
-            <div className="sticky top-0 z-30 flex border-b bg-background/95 backdrop-blur">
-              <div
-                className="sticky left-0 z-40 shrink-0 bg-background"
-                style={{ width: GUTTER_PX }}
-              />
-              {days.map((d, i) => (
-                <DayHeader key={i} day={d} />
-              ))}
-            </div>
+      <div className="flex min-h-0 flex-1">
+        <DndContext
+          id="timeflow-calendar"
+          sensors={sensors}
+          collisionDetection={pointerWithin}
+          modifiers={[snapToSlotY, restrictToWindowEdges]}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="min-w-0 flex-1 overflow-auto">
+            <div
+              className="w-full"
+              style={{ minWidth: GUTTER_PX + 7 * MIN_COL_PX }}
+            >
+              {/* Sticky day headers */}
+              <div className="sticky top-0 z-30 flex border-b bg-background/95 backdrop-blur">
+                <div
+                  className="sticky left-0 z-40 shrink-0 bg-background"
+                  style={{ width: GUTTER_PX }}
+                />
+                {days.map((d, i) => (
+                  <DayHeader key={i} day={d} />
+                ))}
+              </div>
 
-            {/* Grid body */}
-            <div className="flex">
-              <TimeGutter />
-              {days.map((d, i) => (
-                <DayColumn key={i} day={d} tasks={tasksByDay[i]} />
-              ))}
+              {/* Grid body */}
+              <div className="flex">
+                <TimeGutter />
+                {days.map((d, i) => (
+                  <DayColumn key={i} day={d} tasks={tasksByDay[i]} />
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      </DndContext>
+        </DndContext>
+
+        <NowPanel tasks={nowTasks} />
+      </div>
     </NowProvider>
   );
 }
