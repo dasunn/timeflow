@@ -5,7 +5,8 @@
       "PowerShell(npm --version)",
       "PowerShell(npx --version)",
       "PowerShell(git init -b main | Out-String; \"name=$\\(git config --get user.name\\)\"; \"email=$\\(git config --get user.email\\)\")",
-      "PowerShell(npx tsc --noEmit 2>&1 | Out-String; \"exit=$LASTEXITCODE\")"
+      "PowerShell(npx tsc --noEmit 2>&1 | Out-String; \"exit=$LASTEXITCODE\")",
+      "mcp__Claude_Preview__preview_start"
     ]
   }
 }

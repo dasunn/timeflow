@@ -1,13 +1,85 @@
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { format } from "date-fns";
+import { ChevronLeftIcon, ChevronRightIcon, SettingsIcon } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
+import { WeekCalendar } from "@/components/calendar/WeekCalendar";
+import { getTasksForWeek } from "@/lib/data";
+import { addDays, weekDays, weekStart } from "@/lib/domain/time";
+import { cn } from "@/lib/utils";
 
-export default function Home() {
+function parseAnchor(dateParam?: string): Date {
+  if (dateParam) {
+    const d = new Date(`${dateParam}T00:00:00`);
+    if (!Number.isNaN(d.getTime())) return d;
+  }
+  return new Date();
+}
+
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ date?: string }>;
+}) {
+  const { date } = await searchParams;
+  const anchor = parseAnchor(date);
+  const start = weekStart(anchor);
+  const days = weekDays(anchor);
+  const tasks = await getTasksForWeek(anchor);
+  const serverNow = Date.now();
+
+  const prev = format(addDays(start, -7), "yyyy-MM-dd");
+  const next = format(addDays(start, 7), "yyyy-MM-dd");
+  const label = `${format(start, "MMM d")} – ${format(addDays(start, 6), "MMM d, yyyy")}`;
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-8">
-      <h1 className="text-3xl font-bold">TimeFlow</h1>
-      <p className="text-muted-foreground">
-        Personal time management — scaffold ready.
-      </p>
-      <Button>It works</Button>
-    </main>
+    <div className="flex h-screen flex-col">
+      <header className="flex items-center gap-2 border-b px-4 py-2.5">
+        <h1 className="text-lg font-semibold">TimeFlow</h1>
+
+        <nav className="ml-4 flex items-center gap-1">
+          <Link
+            href={`/?date=${prev}`}
+            aria-label="Previous week"
+            className={buttonVariants({ variant: "outline", size: "icon" })}
+          >
+            <ChevronLeftIcon />
+          </Link>
+          <Link
+            href="/"
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            This week
+          </Link>
+          <Link
+            href={`/?date=${next}`}
+            aria-label="Next week"
+            className={buttonVariants({ variant: "outline", size: "icon" })}
+          >
+            <ChevronRightIcon />
+          </Link>
+          <span className="ml-2 text-sm text-muted-foreground">{label}</span>
+        </nav>
+
+        <Link
+          href="/categories"
+          className={cn(
+            buttonVariants({ variant: "ghost", size: "sm" }),
+            "ml-auto",
+          )}
+        >
+          <SettingsIcon />
+          Categories
+        </Link>
+      </header>
+
+      <div className="flex min-h-0 flex-1">
+        <WeekCalendar days={days} tasks={tasks} serverNow={serverNow} />
+        <aside className="hidden w-80 shrink-0 border-l lg:block">
+          <div className="p-4 text-sm text-muted-foreground">
+            Now panel — coming in Phase 5.
+          </div>
+        </aside>
+      </div>
+    </div>
   );
 }
