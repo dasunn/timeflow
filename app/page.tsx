@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { ChevronLeftIcon, ChevronRightIcon, SettingsIcon } from "lucide-react";
 import { CalendarWorkspace } from "@/components/calendar/CalendarWorkspace";
 import { buttonVariants } from "@/components/ui/button";
-import { getNowPanelTasks, getTasksForWeek } from "@/lib/data";
+import { getCategories, getNowPanelTasks, getTasksForWeek } from "@/lib/data";
 import { addDays, weekDays, weekStart } from "@/lib/domain/time";
 import { cn } from "@/lib/utils";
 
@@ -26,9 +26,10 @@ export default async function Home({
   const days = weekDays(anchor);
   const now = new Date();
 
-  const [weekTasks, nowTasks] = await Promise.all([
+  const [weekTasks, nowTasks, categories] = await Promise.all([
     getTasksForWeek(anchor),
     getNowPanelTasks(now),
+    getCategories(),
   ]);
   const serverNow = now.getTime();
 
@@ -81,6 +82,7 @@ export default async function Home({
         days={days}
         weekTasks={weekTasks}
         nowTasks={nowTasks}
+        categories={categories}
         serverNow={serverNow}
       />
     </div>

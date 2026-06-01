@@ -2,7 +2,14 @@
 
 import { useDroppable } from "@dnd-kit/core";
 import { useNow } from "@/components/now-context";
-import { DAY_HEIGHT_PX, isSameDay, topPx } from "@/lib/domain/time";
+import {
+  DAY_HEIGHT_PX,
+  isSameDay,
+  MINUTES_PER_DAY,
+  SLOT_HEIGHT_PX,
+  SLOT_MINUTES,
+  topPx,
+} from "@/lib/domain/time";
 import type { TaskWithRelations } from "@/lib/domain/types";
 import { cn } from "@/lib/utils";
 import { slotLinesStyle, MIN_COL_PX } from "./grid";
@@ -12,9 +19,11 @@ import { TaskCard } from "./TaskCard";
 export function DayColumn({
   day,
   tasks,
+  onCreate,
 }: {
   day: Date;
   tasks: TaskWithRelations[];
+  onCreate: (day: Date, startMinutes: number) => void;
 }) {
   const now = useNow();
   const laid = layoutDayTasks(tasks);
@@ -25,9 +34,24 @@ export function DayColumn({
     data: { day },
   });
 
+  // Click on empty grid (not a card) -> start creating at the clicked slot.
+  function handleClick(e: React.MouseEvent<HTMLDivElement>) {
+    if (e.target !== e.currentTarget) return;
+    const y = e.clientY - e.currentTarget.getBoundingClientRect().top;
+    const minutes = Math.max(
+      0,
+      Math.min(
+        Math.floor(y / SLOT_HEIGHT_PX) * SLOT_MINUTES,
+        MINUTES_PER_DAY - SLOT_MINUTES,
+      ),
+    );
+    onCreate(day, minutes);
+  }
+
   return (
     <div
       ref={setNodeRef}
+      onClick={handleClick}
       className={cn(
         "relative flex-1 border-l border-border",
         isOver && "bg-accent/40",

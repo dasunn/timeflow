@@ -13,6 +13,7 @@ import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
+import { CreateTaskDialog } from "@/components/CreateTaskDialog";
 import { NowProvider, useNow } from "@/components/now-context";
 import { NowPanel } from "@/components/now-panel/NowPanel";
 import { moveTask } from "@/lib/actions/tasks";
@@ -22,7 +23,7 @@ import {
   SLOT_HEIGHT_PX,
   startFromOffsetPx,
 } from "@/lib/domain/time";
-import type { TaskWithRelations } from "@/lib/domain/types";
+import type { Category, TaskWithRelations } from "@/lib/domain/types";
 import { cn } from "@/lib/utils";
 import { DayColumn } from "./DayColumn";
 import { GUTTER_PX, MIN_COL_PX } from "./grid";
@@ -62,15 +63,21 @@ export function CalendarWorkspace({
   days,
   weekTasks,
   nowTasks,
+  categories,
   serverNow,
 }: {
   days: Date[];
   weekTasks: TaskWithRelations[];
   nowTasks: TaskWithRelations[];
+  categories: Category[];
   serverNow: number;
 }) {
   const router = useRouter();
   const [tasks, setTasks] = useState(weekTasks);
+  const [createTarget, setCreateTarget] = useState<{
+    day: Date;
+    startMinutes: number;
+  } | null>(null);
   const [, startTransition] = useTransition();
 
   // Re-sync to server truth whenever fresh data arrives (after router.refresh).
@@ -151,7 +158,14 @@ export function CalendarWorkspace({
               <div className="flex">
                 <TimeGutter />
                 {days.map((d, i) => (
-                  <DayColumn key={i} day={d} tasks={tasksByDay[i]} />
+                  <DayColumn
+                    key={i}
+                    day={d}
+                    tasks={tasksByDay[i]}
+                    onCreate={(day, startMinutes) =>
+                      setCreateTarget({ day, startMinutes })
+                    }
+                  />
                 ))}
               </div>
             </div>
@@ -160,6 +174,14 @@ export function CalendarWorkspace({
 
         <NowPanel tasks={nowTasks} />
       </div>
+
+      {createTarget && (
+        <CreateTaskDialog
+          target={createTarget}
+          categories={categories}
+          onClose={() => setCreateTarget(null)}
+        />
+      )}
     </NowProvider>
   );
 }
