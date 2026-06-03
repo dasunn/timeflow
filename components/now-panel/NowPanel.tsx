@@ -5,7 +5,7 @@ import { CheckIcon, PlayIcon, SquareIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { useNow } from "@/components/now-context";
-import { STATUS_META } from "@/components/status-meta";
+import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { clockIn, clockOut, completeTask } from "@/lib/actions/clock";
 import {
@@ -85,8 +85,7 @@ function NowTaskCard({ task, now }: { task: TaskWithRelations; now: Date }) {
   const sessions = task.clockSessions;
   const open = hasOpenSession(sessions);
   const anyClockIn = hasAnyClockIn(sessions);
-  const status = computeDisplayStatus(task, now, anyClockIn);
-  const meta = STATUS_META[status];
+  const status = computeDisplayStatus(task, now, anyClockIn, open);
   const total = trackedMs(sessions, now);
   const running = openSession(sessions);
   const runningMs = running ? now.getTime() - running.clockInAt.getTime() : 0;
@@ -101,21 +100,19 @@ function NowTaskCard({ task, now }: { task: TaskWithRelations; now: Date }) {
 
   return (
     <div
-      className="rounded-lg border bg-card p-3 shadow-sm ring-2 ring-primary/15"
+      className={cn(
+        "rounded-lg border bg-card p-3 shadow-sm",
+        status === "RUNNING"
+          ? "animate-running ring-2 ring-emerald-400 dark:ring-emerald-500"
+          : "ring-2 ring-primary/15",
+      )}
       style={{ borderLeftColor: accent, borderLeftWidth: 4 }}
     >
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs text-muted-foreground tabular-nums">
           {formatTimeRange(task.plannedStart, task.plannedEnd)}
         </span>
-        <span
-          className={cn(
-            "rounded px-1.5 py-0.5 text-[11px] font-medium",
-            meta.className,
-          )}
-        >
-          {meta.label}
-        </span>
+        <StatusBadge status={status} />
       </div>
 
       <p className="mt-1 font-medium">{task.description}</p>
@@ -127,8 +124,8 @@ function NowTaskCard({ task, now }: { task: TaskWithRelations; now: Date }) {
         </span>
       </div>
       {open && (
-        <div className="mt-1 flex items-center justify-end gap-1.5 text-sm text-red-600 dark:text-red-400">
-          <span className="size-2 animate-pulse rounded-full bg-red-500" />
+        <div className="mt-1 flex items-center justify-end gap-1.5 text-sm text-emerald-600 dark:text-emerald-400">
+          <span className="size-2 animate-pulse rounded-full bg-emerald-500" />
           <span className="tabular-nums">{formatClockDuration(runningMs)}</span>
         </div>
       )}

@@ -18,18 +18,23 @@ export function isDelayed(t: {
   return t.dragDelayCount > 0 || t.autoDelayCount > 0;
 }
 
-// Effective status to DISPLAY (the stored `status` only ever holds the
-// explicit lifecycle states NEW/CANCELLED/COMPLETED; PENDING and DELAYED are
-// derived). Precedence: terminal states win, then DELAYED, then PENDING.
+// Effective status to DISPLAY. The stored `status` only holds the explicit
+// lifecycle states NEW/CANCELLED/COMPLETED; everything else is derived.
+// Precedence: terminal states win, then the live clock lifecycle
+// (RUNNING / PAUSED once the task has been worked on), then DELAYED, then
+// PENDING, then NEW.
 export function computeDisplayStatus(
   t: StatusInput,
   now: Date,
   hasClockIn: boolean,
+  isRunning: boolean,
 ): TaskStatus {
   if (t.status === "CANCELLED") return "CANCELLED";
   if (t.status === "COMPLETED") return "COMPLETED";
+  if (isRunning) return "RUNNING"; // a clock session is currently open
+  if (hasClockIn) return "PAUSED"; // clocked in before, currently stopped
   if (isDelayed(t)) return "DELAYED";
-  if (now.getTime() >= t.plannedStart.getTime() && !hasClockIn) return "PENDING";
+  if (now.getTime() >= t.plannedStart.getTime()) return "PENDING";
   return "NEW";
 }
 

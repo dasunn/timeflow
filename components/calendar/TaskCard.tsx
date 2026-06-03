@@ -3,8 +3,8 @@
 import { useDraggable } from "@dnd-kit/core";
 import { AlarmClockOffIcon, ArrowDownIcon, LockIcon } from "lucide-react";
 import { useNow } from "@/components/now-context";
-import { STATUS_META } from "@/components/status-meta";
-import { hasAnyClockIn } from "@/lib/domain/clock";
+import { StatusBadge } from "@/components/StatusBadge";
+import { hasAnyClockIn, hasOpenSession } from "@/lib/domain/clock";
 import { computeDisplayStatus } from "@/lib/domain/status";
 import { formatTimeRange, heightPx, topPx } from "@/lib/domain/time";
 import type { TaskWithRelations } from "@/lib/domain/types";
@@ -19,8 +19,8 @@ export function TaskCard({
 }: LaidOutTask & { onOpenDetails?: (taskId: string) => void }) {
   const now = useNow();
   const clockedIn = hasAnyClockIn(task.clockSessions);
-  const status = computeDisplayStatus(task, now, clockedIn);
-  const meta = STATUS_META[status];
+  const running = hasOpenSession(task.clockSessions);
+  const status = computeDisplayStatus(task, now, clockedIn, running);
   const locked = task.isLocked;
 
   const { attributes, listeners, setNodeRef, transform, isDragging } =
@@ -59,6 +59,9 @@ export function TaskCard({
         className={cn(
           "flex h-full flex-col overflow-hidden rounded-md border bg-card px-1.5 py-1 text-xs shadow-sm",
           status === "DELAYED" && "ring-1 ring-amber-300 dark:ring-amber-800",
+          status === "PAUSED" && "ring-1 ring-sky-300 dark:ring-sky-800",
+          status === "RUNNING" &&
+            "animate-running ring-2 ring-emerald-400 dark:ring-emerald-500",
           terminal && "opacity-70",
           isDragging && "shadow-lg ring-2 ring-ring",
         )}
@@ -70,14 +73,7 @@ export function TaskCard({
           </span>
           <span className="flex shrink-0 items-center gap-1">
             {locked && <LockIcon className="size-2.5 text-muted-foreground" />}
-            <span
-              className={cn(
-                "rounded px-1 text-[9px] leading-tight font-medium",
-                meta.className,
-              )}
-            >
-              {meta.label}
-            </span>
+            <StatusBadge status={status} size="xs" />
           </span>
         </div>
 

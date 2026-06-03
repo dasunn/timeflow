@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { CheckIcon, PlayIcon, SquareIcon, Trash2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { STATUS_META } from "@/components/status-meta";
+import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -35,7 +35,6 @@ import {
   formatTimeRange,
 } from "@/lib/domain/time";
 import type { TaskWithRelations } from "@/lib/domain/types";
-import { cn } from "@/lib/utils";
 
 export function TaskDetailsDialog({
   task,
@@ -60,8 +59,7 @@ export function TaskDetailsDialog({
   const running = openSession(sessions);
   const runningMs = running ? now.getTime() - running.clockInAt.getTime() : 0;
 
-  const status = computeDisplayStatus(task, now, anyClockIn);
-  const meta = STATUS_META[status];
+  const status = computeDisplayStatus(task, now, anyClockIn, open);
   const total = trackedMs(sessions, now);
   const accent = task.category?.color ?? "var(--muted-foreground)";
   const isCancelled = task.status === "CANCELLED";
@@ -85,14 +83,7 @@ export function TaskDetailsDialog({
             <DialogTitle className="flex-1 truncate">
               {task.description}
             </DialogTitle>
-            <span
-              className={cn(
-                "shrink-0 rounded px-1.5 py-0.5 text-[11px] font-medium",
-                meta.className,
-              )}
-            >
-              {meta.label}
-            </span>
+            <StatusBadge status={status} />
           </div>
           <DialogDescription>
             {format(task.plannedStart, "EEE, MMM d")} ·{" "}
@@ -144,8 +135,8 @@ export function TaskDetailsDialog({
               </Button>
             )}
             {open && (
-              <span className="ml-auto flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400">
-                <span className="size-2 animate-pulse rounded-full bg-red-500" />
+              <span className="ml-auto flex items-center gap-1.5 text-sm text-emerald-600 dark:text-emerald-400">
+                <span className="size-2 animate-pulse rounded-full bg-emerald-500" />
                 <span className="tabular-nums">
                   {formatClockDuration(runningMs)}
                 </span>
