@@ -1,7 +1,13 @@
 "use client";
 
 import { format } from "date-fns";
-import { CheckIcon, PlayIcon, SquareIcon, Trash2Icon } from "lucide-react";
+import {
+  AwardIcon,
+  CheckIcon,
+  PlayIcon,
+  SquareIcon,
+  Trash2Icon,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -64,6 +70,8 @@ export function TaskDetailsDialog({
   const accent = task.category?.color ?? "var(--muted-foreground)";
   const isCancelled = task.status === "CANCELLED";
   const isCompleted = task.status === "COMPLETED";
+  const awarded =
+    isCompleted && task.dragDelayCount === 0 && task.autoDelayCount === 0;
 
   const act = (fn: () => Promise<unknown>) =>
     startTransition(async () => {
@@ -83,6 +91,9 @@ export function TaskDetailsDialog({
             <DialogTitle className="flex-1 truncate">
               {task.description}
             </DialogTitle>
+            {awarded && (
+              <AwardIcon className="size-4 shrink-0 text-amber-500" />
+            )}
             <StatusBadge status={status} />
           </div>
           <DialogDescription>
@@ -91,6 +102,13 @@ export function TaskDetailsDialog({
             {task.category ? ` · ${task.category.name}` : ""}
           </DialogDescription>
         </DialogHeader>
+
+        {awarded && (
+          <div className="flex items-center gap-1.5 rounded-md bg-emerald-100 px-2 py-1.5 text-xs font-medium text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200">
+            <AwardIcon className="size-4 text-amber-500" />
+            Completed on time — nice work!
+          </div>
+        )}
 
         {(task.dragDelayCount > 0 || task.autoDelayCount > 0) && (
           <div className="flex gap-4 text-xs">

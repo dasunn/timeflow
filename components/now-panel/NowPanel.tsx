@@ -1,7 +1,7 @@
 "use client";
 
 import { format } from "date-fns";
-import { CheckIcon, PlayIcon, SquareIcon } from "lucide-react";
+import { AwardIcon, CheckIcon, PlayIcon, SquareIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { useNow } from "@/components/now-context";
@@ -91,6 +91,8 @@ function NowTaskCard({ task, now }: { task: TaskWithRelations; now: Date }) {
   const runningMs = running ? now.getTime() - running.clockInAt.getTime() : 0;
   const accent = task.category?.color ?? "var(--muted-foreground)";
   const completed = task.status === "COMPLETED";
+  const awarded =
+    completed && task.dragDelayCount === 0 && task.autoDelayCount === 0;
 
   const run = (fn: (id: string) => Promise<unknown>) =>
     startTransition(async () => {
@@ -101,10 +103,12 @@ function NowTaskCard({ task, now }: { task: TaskWithRelations; now: Date }) {
   return (
     <div
       className={cn(
-        "rounded-lg border bg-card p-3 shadow-sm",
-        status === "RUNNING"
-          ? "animate-running ring-2 ring-emerald-400 dark:ring-emerald-500"
-          : "ring-2 ring-primary/15",
+        "rounded-lg border p-3 shadow-sm",
+        completed
+          ? "border-emerald-300 bg-emerald-100 ring-1 ring-emerald-300 dark:border-emerald-800/70 dark:bg-emerald-950/60 dark:ring-emerald-800"
+          : status === "RUNNING"
+            ? "animate-running bg-card ring-2 ring-emerald-400 dark:ring-emerald-500"
+            : "bg-card ring-2 ring-primary/15",
       )}
       style={{ borderLeftColor: accent, borderLeftWidth: 4 }}
     >
@@ -112,7 +116,10 @@ function NowTaskCard({ task, now }: { task: TaskWithRelations; now: Date }) {
         <span className="text-xs text-muted-foreground tabular-nums">
           {formatTimeRange(task.plannedStart, task.plannedEnd)}
         </span>
-        <StatusBadge status={status} />
+        <span className="flex items-center gap-1.5">
+          {awarded && <AwardIcon className="size-4 text-amber-500" />}
+          <StatusBadge status={status} />
+        </span>
       </div>
 
       <p className="mt-1 font-medium">{task.description}</p>

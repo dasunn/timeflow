@@ -1,7 +1,12 @@
 "use client";
 
 import { useDraggable } from "@dnd-kit/core";
-import { AlarmClockOffIcon, ArrowDownIcon, LockIcon } from "lucide-react";
+import {
+  AlarmClockOffIcon,
+  ArrowDownIcon,
+  AwardIcon,
+  LockIcon,
+} from "lucide-react";
 import { useNow } from "@/components/now-context";
 import { StatusBadge } from "@/components/StatusBadge";
 import { hasAnyClockIn, hasOpenSession } from "@/lib/domain/clock";
@@ -31,7 +36,11 @@ export function TaskCard({
   const widthPct = 100 / lanes;
   const leftPct = lane * widthPct;
   const accent = task.category?.color ?? "var(--muted-foreground)";
-  const terminal = status === "CANCELLED" || status === "COMPLETED";
+  const completed = status === "COMPLETED";
+  const cancelled = status === "CANCELLED";
+  // Reward on-time completion: completed with zero drag and zero auto delays.
+  const awarded =
+    completed && task.dragDelayCount === 0 && task.autoDelayCount === 0;
 
   return (
     <div
@@ -62,7 +71,9 @@ export function TaskCard({
           status === "PAUSED" && "ring-1 ring-sky-300 dark:ring-sky-800",
           status === "RUNNING" &&
             "animate-running ring-2 ring-emerald-400 dark:ring-emerald-500",
-          terminal && "opacity-70",
+          completed &&
+            "border-emerald-300 bg-emerald-100 dark:border-emerald-800/70 dark:bg-emerald-950/60",
+          cancelled && "opacity-60",
           isDragging && "shadow-lg ring-2 ring-ring",
         )}
         style={{ borderLeftColor: accent, borderLeftWidth: 4 }}
@@ -72,7 +83,10 @@ export function TaskCard({
             {formatTimeRange(task.plannedStart, task.plannedEnd)}
           </span>
           <span className="flex shrink-0 items-center gap-1">
-            {locked && <LockIcon className="size-2.5 text-muted-foreground" />}
+            {awarded && <AwardIcon className="size-3 text-amber-500" />}
+            {locked && !completed && (
+              <LockIcon className="size-2.5 text-muted-foreground" />
+            )}
             <StatusBadge status={status} size="xs" />
           </span>
         </div>
@@ -80,7 +94,8 @@ export function TaskCard({
         <p
           className={cn(
             "mt-0.5 line-clamp-2 leading-tight font-medium",
-            status === "CANCELLED" && "text-muted-foreground line-through",
+            cancelled && "text-muted-foreground line-through",
+            completed && "text-emerald-900 dark:text-emerald-100",
           )}
         >
           {task.description}
