@@ -19,7 +19,15 @@
       "Bash(git commit *)",
       "Bash(git merge *)",
       "Bash(echo \"=== EXIT $? ===\")",
-      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('.claude/settings.local.json','utf8'\\)\\);console.log\\('settings.local.json: valid JSON'\\)\")"
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('.claude/settings.local.json','utf8'\\)\\);console.log\\('settings.local.json: valid JSON'\\)\")",
+      "Bash(node -e \"console.log\\('prisma', require\\('prisma/package.json'\\).version\\); console.log\\('@prisma/client', require\\('@prisma/client/package.json'\\).version\\)\")",
+      "Bash(node -e \"try{console.log\\('adapter-libsql', require\\('@prisma/adapter-libsql/package.json'\\).version\\)}catch{console.log\\('adapter-libsql NOT installed'\\)}\")",
+      "Bash(node -e \"try{console.log\\('@libsql/client', require\\('@libsql/client/package.json'\\).version\\)}catch{console.log\\('@libsql/client NOT installed'\\)}\")",
+      "Bash(npm install *)",
+      "Bash(grep -iE \"query_engine|engine|\\\\.node$|\\\\.wasm$\")",
+      "Bash(rm -f node_modules/.prisma/client/*.tmp* 2>/dev/null; echo \"tmp files cleaned\" *)",
+      "Bash(node -e 'const{PrismaClient}=require\\('\\\\''@prisma/client'\\\\''\\);const{PrismaLibSQL}=require\\('\\\\''@prisma/adapter-libsql'\\\\''\\);const p=new PrismaClient\\({adapter:new PrismaLibSQL\\({url:'\\\\''file:prisma/dev.db'\\\\''}\\)}\\);p.task.deleteMany\\({where:{description:'\\\\''Turso write test'\\\\''}}\\).then\\(r=>{console.log\\('\\\\''cleaned test rows:'\\\\'',r.count\\);return p.$disconnect\\(\\);}\\).catch\\(e=>{console.error\\(e.message\\);process.exit\\(1\\)}\\)')",
+      "Bash(npm run *)"
     ]
   }
 }
