@@ -71,6 +71,8 @@ export function TaskCard({
           status === "PAUSED" && "ring-1 ring-sky-300 dark:ring-sky-800",
           status === "RUNNING" &&
             "animate-running ring-2 ring-emerald-400 dark:ring-emerald-500",
+          status === "PENDING" &&
+            "animate-overdue border-red-300 bg-red-100 ring-2 ring-red-400 dark:border-red-800/70 dark:bg-red-950/60 dark:ring-red-500",
           completed &&
             "border-emerald-300 bg-emerald-100 dark:border-emerald-800/70 dark:bg-emerald-950/60",
           cancelled && "opacity-60",
