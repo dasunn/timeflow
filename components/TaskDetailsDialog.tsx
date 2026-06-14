@@ -3,6 +3,7 @@
 import { format } from "date-fns";
 import {
   AwardIcon,
+  BellIcon,
   CheckIcon,
   PlayIcon,
   SquareIcon,
@@ -20,19 +21,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import {
   clockIn,
   clockOut,
   completeTask,
   deleteClockSession,
 } from "@/lib/actions/clock";
-import { cancelTask, reopenTask } from "@/lib/actions/tasks";
+import { cancelTask, reopenTask, setTaskReminder } from "@/lib/actions/tasks";
 import {
   hasAnyClockIn,
   hasOpenSession,
   openSession,
   trackedMs,
 } from "@/lib/domain/clock";
+import {
+  parseReminderValue,
+  REMINDER_CHOICES,
+} from "@/lib/domain/reminders";
 import { computeDisplayStatus } from "@/lib/domain/status";
 import {
   formatClockDuration,
@@ -41,6 +47,10 @@ import {
   formatTimeRange,
 } from "@/lib/domain/time";
 import type { TaskWithRelations } from "@/lib/domain/types";
+import { ensureNotificationPermission } from "@/lib/notifications";
+
+const SELECT_CLASS =
+  "h-8 rounded-lg border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30";
 
 export function TaskDetailsDialog({
   task,
@@ -160,6 +170,41 @@ export function TaskDetailsDialog({
                 </span>
               </span>
             )}
+          </div>
+        )}
+
+        {/* Reminder */}
+        {!isCompleted && !isCancelled && (
+          <div className="flex items-center justify-between gap-2">
+            <Label
+              htmlFor="task-reminder"
+              className="flex items-center gap-1.5 text-sm font-medium"
+            >
+              <BellIcon className="size-3.5 text-muted-foreground" />
+              Reminder
+            </Label>
+            <select
+              id="task-reminder"
+              className={SELECT_CLASS}
+              disabled={pending}
+              value={
+                task.notifyMinutesBefore == null
+                  ? "off"
+                  : String(task.notifyMinutesBefore)
+              }
+              onChange={(e) => {
+                const minutes = parseReminderValue(e.target.value);
+                if (minutes !== null) ensureNotificationPermission();
+                act(() => setTaskReminder(task.id, minutes));
+              }}
+            >
+              <option value="off">No reminder</option>
+              {REMINDER_CHOICES.map((m) => (
+                <option key={m} value={m}>
+                  {m} minutes before
+                </option>
+              ))}
+            </select>
           </div>
         )}
 

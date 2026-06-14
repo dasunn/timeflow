@@ -6,7 +6,7 @@ export const STATUS_META: Record<TaskStatus, { label: string; className: string 
   NEW: { label: "New", className: "bg-secondary text-secondary-foreground" },
   PENDING: {
     label: "Pending",
-    className: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+    className: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
   },
   DELAYED: {
     label: "Delayed",

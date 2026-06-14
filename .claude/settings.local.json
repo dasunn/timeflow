@@ -16,7 +16,10 @@
       "Bash(npx eslint *)",
       "Bash(git checkout *)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(git merge *)",
+      "Bash(echo \"=== EXIT $? ===\")",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('.claude/settings.local.json','utf8'\\)\\);console.log\\('settings.local.json: valid JSON'\\)\")"
     ]
   }
 }

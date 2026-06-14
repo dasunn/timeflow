@@ -37,6 +37,12 @@ model Task {
   dragDelayCount Int @default(0) // manual drag to a later slot
   autoDelayCount Int @default(0) // end time passed with no clock-in
 
+  // Reminder: minutes before plannedStart to fire a browser notification.
+  // null = notifications off. UI offers 5 | 10 | 15 | 20 (see lib/domain/reminders).
+  notifyMinutesBefore Int?
+  // Set once the reminder has fired, so it delivers at most once.
+  notifiedAt          DateTime?
+
   // True once the task has >= 1 clock-in OR is completed. Disables dragging.
   isLocked Boolean @default(false)
 
