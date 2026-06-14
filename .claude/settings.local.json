@@ -7,7 +7,14 @@
       "PowerShell(git init -b main | Out-String; \"name=$\\(git config --get user.name\\)\"; \"email=$\\(git config --get user.email\\)\")",
       "PowerShell(npx tsc --noEmit 2>&1 | Out-String; \"exit=$LASTEXITCODE\")",
       "mcp__Claude_Preview__preview_start",
-      "PowerShell($html = \\(Invoke-WebRequest -Uri \"http://localhost:3000/\" -UseBasicParsing\\).Content; $m = [regex]::Matches\\($html, 'aria-describedby=\"\\([^\"]+\\)\"'\\); \"matches: $\\($m.Count\\)\"; \\($m | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique\\) -join \", \"; \"contains DndDescribedBy: $\\($html.Contains\\('DndDescribedBy'\\)\\)\")"
+      "PowerShell($html = \\(Invoke-WebRequest -Uri \"http://localhost:3000/\" -UseBasicParsing\\).Content; $m = [regex]::Matches\\($html, 'aria-describedby=\"\\([^\"]+\\)\"'\\); \"matches: $\\($m.Count\\)\"; \\($m | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique\\) -join \", \"; \"contains DndDescribedBy: $\\($html.Contains\\('DndDescribedBy'\\)\\)\")",
+      "Bash(npx tsc *)",
+      "Bash(npx eslint *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git checkout *)",
+      "Bash(git merge *)",
+      "Bash(echo \"=== EXIT $? ===\")"
     ]
   }
 }
