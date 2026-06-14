@@ -16,6 +16,10 @@ export const MINUTES_PER_DAY = 24 * 60; // 1440
 export const SLOT_HEIGHT_PX = 32; // vertical pixels per 30-min slot
 export const DAY_HEIGHT_PX = SLOTS_PER_DAY * SLOT_HEIGHT_PX; // 1536
 
+// Dragging snaps finer than the visual grid — to 15-minute steps.
+export const DRAG_SNAP_MINUTES = 15;
+export const DRAG_SNAP_PX = (SLOT_HEIGHT_PX * DRAG_SNAP_MINUTES) / SLOT_MINUTES; // 16
+
 // ---- Week helpers (Monday-start) -----------------------------------------
 export function weekStart(date: Date): Date {
   return startOfWeek(date, { weekStartsOn: 1 });
@@ -59,14 +63,15 @@ export function dateAtMinutes(day: Date, minutes: number): Date {
 }
 
 // Given a target day and the dragged card's pixel offset from the top of the
-// day column, compute the snapped new start, clamped so the task still fits
-// within the day.
+// day column, compute the new start snapped to 15-min steps (finer than the
+// 30-min grid), clamped so the task still fits within the day.
 export function startFromOffsetPx(
   targetDay: Date,
   offsetTopPx: number,
   durationMin: number,
 ): Date {
-  let minutes = snapMinutes((offsetTopPx / SLOT_HEIGHT_PX) * SLOT_MINUTES);
+  const rawMinutes = (offsetTopPx / SLOT_HEIGHT_PX) * SLOT_MINUTES;
+  let minutes = Math.round(rawMinutes / DRAG_SNAP_MINUTES) * DRAG_SNAP_MINUTES;
   minutes = Math.max(0, Math.min(minutes, MINUTES_PER_DAY - durationMin));
   return dateAtMinutes(targetDay, minutes);
 }

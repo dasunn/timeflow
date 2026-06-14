@@ -19,9 +19,9 @@ import { NowProvider, useNow } from "@/components/now-context";
 import { NowPanel } from "@/components/now-panel/NowPanel";
 import { moveTask } from "@/lib/actions/tasks";
 import {
+  DRAG_SNAP_PX,
   durationMinutes,
   isSameDay,
-  SLOT_HEIGHT_PX,
   startFromOffsetPx,
 } from "@/lib/domain/time";
 import type { Category, TaskWithRelations } from "@/lib/domain/types";
@@ -30,11 +30,11 @@ import { DayColumn } from "./DayColumn";
 import { GUTTER_PX, MIN_COL_PX } from "./grid";
 import { TimeGutter } from "./TimeGutter";
 
-// Snap the vertical drag to the 30-min grid; leave horizontal free so cards
-// can move between day columns.
+// Snap the vertical drag to 15-min steps (finer than the 30-min grid); leave
+// horizontal free so cards can move between day columns.
 const snapToSlotY: Modifier = ({ transform }) => ({
   ...transform,
-  y: Math.round(transform.y / SLOT_HEIGHT_PX) * SLOT_HEIGHT_PX,
+  y: Math.round(transform.y / DRAG_SNAP_PX) * DRAG_SNAP_PX,
 });
 
 function DayHeader({ day }: { day: Date }) {
