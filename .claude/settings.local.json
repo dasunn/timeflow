@@ -7,7 +7,16 @@
       "PowerShell(git init -b main | Out-String; \"name=$\\(git config --get user.name\\)\"; \"email=$\\(git config --get user.email\\)\")",
       "PowerShell(npx tsc --noEmit 2>&1 | Out-String; \"exit=$LASTEXITCODE\")",
       "mcp__Claude_Preview__preview_start",
-      "PowerShell($html = \\(Invoke-WebRequest -Uri \"http://localhost:3000/\" -UseBasicParsing\\).Content; $m = [regex]::Matches\\($html, 'aria-describedby=\"\\([^\"]+\\)\"'\\); \"matches: $\\($m.Count\\)\"; \\($m | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique\\) -join \", \"; \"contains DndDescribedBy: $\\($html.Contains\\('DndDescribedBy'\\)\\)\")"
+      "PowerShell($html = \\(Invoke-WebRequest -Uri \"http://localhost:3000/\" -UseBasicParsing\\).Content; $m = [regex]::Matches\\($html, 'aria-describedby=\"\\([^\"]+\\)\"'\\); \"matches: $\\($m.Count\\)\"; \\($m | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique\\) -join \", \"; \"contains DndDescribedBy: $\\($html.Contains\\('DndDescribedBy'\\)\\)\")",
+      "PowerShell(Get-Partition -DriveLetter D | Get-Disk | Get-PhysicalDisk | Select-Object FriendlyName, MediaType, BusType, @{N='SizeGB';E={[math]::Round\\($_.Size/1GB\\)}} | Format-List)",
+      "Bash(npx prisma *)",
+      "PowerShell(Get-CimInstance Win32_Process -Filter \"Name='node.exe'\")",
+      "PowerShell(foreach \\($procId in 21292,22228,10316,23340\\) { try { Stop-Process -Id $procId -Force -ErrorAction Stop; \"stopped $procId\" } catch { \"could not stop $procId : $\\($_.Exception.Message\\)\" } })",
+      "Bash(npx tsc *)",
+      "Bash(npx eslint *)",
+      "Bash(git checkout *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
     ]
   }
 }
