@@ -4,7 +4,12 @@
 // domain/validation layer (see lib/domain).
 
 generator client {
-  provider = "prisma-client-js"
+  // The libSQL driver adapter (see lib/db.ts) connects to Turso in production
+  // and a local SQLite file in dev. binaryTargets includes Netlify's serverless
+  // Linux runtime (rhel-openssl-3.0.x) so the query engine ships in the build;
+  // "native" keeps local (Windows) dev working.
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
