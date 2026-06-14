@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
+import { isReminderChoice } from "@/lib/domain/reminders";
 import { isLaterDrag } from "@/lib/domain/status";
 import { taskCreateSchema } from "@/lib/domain/validation";
 
@@ -13,12 +14,14 @@ export async function createTask(input: {
   categoryId: string | null;
   plannedStartMs: number;
   plannedEndMs: number;
+  notifyMinutesBefore: number | null;
 }): Promise<ActionResult> {
   const parsed = taskCreateSchema.safeParse({
     description: input.description,
     categoryId: input.categoryId,
     plannedStart: new Date(input.plannedStartMs),
     plannedEnd: new Date(input.plannedEndMs),
+    notifyMinutesBefore: input.notifyMinutesBefore,
   });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid task" };
@@ -30,7 +33,27 @@ export async function createTask(input: {
       categoryId: parsed.data.categoryId ?? null,
       plannedStart: parsed.data.plannedStart,
       plannedEnd: parsed.data.plannedEnd,
+      notifyMinutesBefore: parsed.data.notifyMinutesBefore ?? null,
     },
+  });
+
+  revalidatePath("/");
+  return { ok: true };
+}
+
+// Change (or turn off) a task's reminder after creation. Clearing notifiedAt
+// re-arms delivery so an edited reminder can fire again.
+export async function setTaskReminder(
+  taskId: string,
+  notifyMinutesBefore: number | null,
+): Promise<ActionResult> {
+  if (notifyMinutesBefore !== null && !isReminderChoice(notifyMinutesBefore)) {
+    return { ok: false, error: "Invalid reminder" };
+  }
+
+  await prisma.task.update({
+    where: { id: taskId },
+    data: { notifyMinutesBefore, notifiedAt: null },
   });
 
   revalidatePath("/");

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isReminderChoice } from "@/lib/domain/reminders";
 
 const hexColor = z
   .string()
@@ -17,6 +18,13 @@ export const taskCreateSchema = z
     categoryId: z.string().nullable().optional(),
     plannedStart: z.coerce.date(),
     plannedEnd: z.coerce.date(),
+    // null = no reminder; otherwise minutes-before from REMINDER_CHOICES.
+    notifyMinutesBefore: z
+      .number()
+      .int()
+      .refine(isReminderChoice, "Invalid reminder")
+      .nullable()
+      .optional(),
   })
   .refine((v) => v.plannedEnd.getTime() > v.plannedStart.getTime(), {
     message: "End must be after start",

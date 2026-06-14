@@ -1,6 +1,7 @@
 "use client";
 
 import { format } from "date-fns";
+import { BellIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -18,14 +19,21 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createTask } from "@/lib/actions/tasks";
+import {
+  DEFAULT_REMINDER_MINUTES,
+  parseReminderValue,
+  REMINDER_CHOICES,
+} from "@/lib/domain/reminders";
 import { dateAtMinutes, formatDuration, MINUTES_PER_DAY } from "@/lib/domain/time";
 import type { Category } from "@/lib/domain/types";
+import { ensureNotificationPermission } from "@/lib/notifications";
 import { zodResolver } from "@/lib/zod-resolver";
 
 const schema = z.object({
   description: z.string().trim().min(1, "Description is required").max(500),
   categoryId: z.string(),
   endMinutes: z.number(),
+  notifyMinutesBefore: z.number().nullable(),
 });
 type Values = z.infer<typeof schema>;
 
@@ -60,7 +68,16 @@ export function CreateTaskDialog({
     formState: { errors },
   } = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { description: "", categoryId: "", endMinutes: defaultEnd },
+    defaultValues: {
+      description: "",
+      categoryId: "",
+      endMinutes: defaultEnd,
+      notifyMinutesBefore: DEFAULT_REMINDER_MINUTES,
+    },
+  });
+
+  const reminderField = register("notifyMinutesBefore", {
+    setValueAs: parseReminderValue,
   });
 
   const endOptions: { value: number; label: string }[] = [];
@@ -78,6 +95,7 @@ export function CreateTaskDialog({
 
   function onSubmit(values: Values) {
     setServerError(null);
+    if (values.notifyMinutesBefore !== null) ensureNotificationPermission();
     startTransition(async () => {
       const startMs = dateAtMinutes(target.day, target.startMinutes).getTime();
       const endMs = dateAtMinutes(target.day, values.endMinutes).getTime();
@@ -86,6 +104,7 @@ export function CreateTaskDialog({
         categoryId: values.categoryId || null,
         plannedStartMs: startMs,
         plannedEndMs: endMs,
+        notifyMinutesBefore: values.notifyMinutesBefore,
       });
       if (res.ok) {
         close(false);
@@ -153,6 +172,29 @@ export function CreateTaskDialog({
                 ))}
               </select>
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="notifyMinutesBefore" className="flex items-center gap-1.5">
+              <BellIcon className="size-3.5 text-muted-foreground" />
+              Reminder
+            </Label>
+            <select
+              id="notifyMinutesBefore"
+              className={SELECT_CLASS}
+              {...reminderField}
+              onChange={(e) => {
+                reminderField.onChange(e);
+                if (e.target.value !== "off") ensureNotificationPermission();
+              }}
+            >
+              <option value="off">No reminder</option>
+              {REMINDER_CHOICES.map((m) => (
+                <option key={m} value={m}>
+                  {m} minutes before
+                </option>
+              ))}
+            </select>
           </div>
 
           {serverError && (

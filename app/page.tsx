@@ -2,6 +2,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { ChevronLeftIcon, ChevronRightIcon, SettingsIcon } from "lucide-react";
 import { AutoOverdueRunner } from "@/components/AutoOverdueRunner";
+import { ReminderRunner } from "@/components/ReminderRunner";
 import { CalendarWorkspace } from "@/components/calendar/CalendarWorkspace";
 import { buttonVariants } from "@/components/ui/button";
 import { getCategories, getNowPanelTasks, getTasksForWeek } from "@/lib/data";
@@ -41,6 +42,7 @@ export default async function Home({
   return (
     <div className="flex h-screen flex-col">
       <AutoOverdueRunner />
+      <ReminderRunner />
       <header className="flex items-center gap-2 border-b px-4 py-2.5">
         <h1 className="text-lg font-semibold">TimeFlow</h1>
 
