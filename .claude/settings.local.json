@@ -27,7 +27,13 @@
       "Bash(grep -iE \"query_engine|engine|\\\\.node$|\\\\.wasm$\")",
       "Bash(rm -f node_modules/.prisma/client/*.tmp* 2>/dev/null; echo \"tmp files cleaned\" *)",
       "Bash(node -e 'const{PrismaClient}=require\\('\\\\''@prisma/client'\\\\''\\);const{PrismaLibSQL}=require\\('\\\\''@prisma/adapter-libsql'\\\\''\\);const p=new PrismaClient\\({adapter:new PrismaLibSQL\\({url:'\\\\''file:prisma/dev.db'\\\\''}\\)}\\);p.task.deleteMany\\({where:{description:'\\\\''Turso write test'\\\\''}}\\).then\\(r=>{console.log\\('\\\\''cleaned test rows:'\\\\'',r.count\\);return p.$disconnect\\(\\);}\\).catch\\(e=>{console.error\\(e.message\\);process.exit\\(1\\)}\\)')",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(node prisma/seed.mjs)",
+      "Bash(taskkill /PID 14260 /F)",
+      "PowerShell(Get-Process -Id 14260 -ErrorAction SilentlyContinue)",
+      "PowerShell(Stop-Process -Force)",
+      "PowerShell(Get-Process node -ErrorAction SilentlyContinue)",
+      "PowerShell(if \\($?\\) { \"stopped or absent\" })"
     ]
   }
 }
