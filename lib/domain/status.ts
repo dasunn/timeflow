@@ -21,8 +21,9 @@ export function isDelayed(t: {
 // Effective status to DISPLAY. The stored `status` only holds the explicit
 // lifecycle states NEW/CANCELLED/COMPLETED; everything else is derived.
 // Precedence: terminal states win, then the live clock lifecycle
-// (RUNNING / PAUSED once the task has been worked on), then DELAYED, then
-// PENDING, then NEW.
+// (RUNNING / PAUSED once the task has been worked on), then PENDING (start
+// passed and never started — the urgent "not started on time" red state),
+// then DELAYED (rescheduled to a slot that hasn't arrived yet), then NEW.
 export function computeDisplayStatus(
   t: StatusInput,
   now: Date,
@@ -33,8 +34,12 @@ export function computeDisplayStatus(
   if (t.status === "COMPLETED") return "COMPLETED";
   if (isRunning) return "RUNNING"; // a clock session is currently open
   if (hasClockIn) return "PAUSED"; // clocked in before, currently stopped
-  if (isDelayed(t)) return "DELAYED";
+  // Past its planned start and never clocked in -> "not started on time".
+  // This MUST outrank DELAYED: once a task's end passes, autoDelayCount gets
+  // bumped (isDelayed -> true), so checking DELAYED first would mask every
+  // overdue task as amber and the red PENDING pulse would never show.
   if (now.getTime() >= t.plannedStart.getTime()) return "PENDING";
+  if (isDelayed(t)) return "DELAYED"; // dragged later, new slot not yet here
   return "NEW";
 }
 
