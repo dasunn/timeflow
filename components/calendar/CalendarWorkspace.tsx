@@ -200,6 +200,7 @@ export function CalendarWorkspace({
       {detailsTask && (
         <TaskDetailsDialog
           task={detailsTask}
+          categories={categories}
           onClose={() => setDetailsTaskId(null)}
         />
       )}

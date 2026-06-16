@@ -90,6 +90,18 @@ export function formatTimeRange(start: Date, end: Date): string {
   return `${formatHm(start)}–${formatHm(end)}`;
 }
 
+// "HH:MM" (24h) <-> minutes since midnight, for <input type="time"> values.
+// The time input's value is always 24h "HH:MM" regardless of locale display.
+export function minutesToTime(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+export function timeToMinutes(value: string): number {
+  const [h, m] = value.split(":");
+  return (Number(h) || 0) * 60 + (Number(m) || 0);
+}
+
 // Label for a gutter slot index (0 => "00:00", 47 => "23:30").
 export function slotLabel(slotIndex: number): string {
   const minutes = slotIndex * SLOT_MINUTES;

@@ -41,6 +41,47 @@ export async function createTask(input: {
   return { ok: true };
 }
 
+// Edit a task's plan (description, category, planned window). Only allowed
+// while no time has been recorded — mirrors the pencil gate in the details
+// dialog, and enforced here so a stale client can't bypass it.
+export async function updateTask(input: {
+  id: string;
+  description: string;
+  categoryId: string | null;
+  plannedStartMs: number;
+  plannedEndMs: number;
+}): Promise<ActionResult> {
+  const parsed = taskCreateSchema.safeParse({
+    description: input.description,
+    categoryId: input.categoryId,
+    plannedStart: new Date(input.plannedStartMs),
+    plannedEnd: new Date(input.plannedEndMs),
+  });
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid task" };
+  }
+
+  const recorded = await prisma.clockSession.count({
+    where: { taskId: input.id },
+  });
+  if (recorded > 0) {
+    return { ok: false, error: "Can't edit a task once time is recorded" };
+  }
+
+  await prisma.task.update({
+    where: { id: input.id },
+    data: {
+      description: parsed.data.description,
+      categoryId: parsed.data.categoryId ?? null,
+      plannedStart: parsed.data.plannedStart,
+      plannedEnd: parsed.data.plannedEnd,
+    },
+  });
+
+  revalidatePath("/");
+  return { ok: true };
+}
+
 // Change (or turn off) a task's reminder after creation. Clearing notifiedAt
 // re-arms delivery so an edited reminder can fire again.
 export async function setTaskReminder(
