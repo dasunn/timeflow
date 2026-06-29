@@ -47,7 +47,7 @@ export async function completeTask(taskId: string): Promise<ActionResult> {
 
   await prisma.task.update({
     where: { id: taskId },
-    data: { status: "COMPLETED", isLocked: true },
+    data: { status: "COMPLETED", isLocked: true, completedAt: new Date() },
   });
 
   revalidatePath("/");

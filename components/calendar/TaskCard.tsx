@@ -9,8 +9,12 @@ import {
 } from "lucide-react";
 import { useNow } from "@/components/now-context";
 import { StatusBadge } from "@/components/StatusBadge";
-import { hasAnyClockIn, hasOpenSession } from "@/lib/domain/clock";
-import { computeDisplayStatus } from "@/lib/domain/status";
+import {
+  firstClockInAt,
+  hasAnyClockIn,
+  hasOpenSession,
+} from "@/lib/domain/clock";
+import { computeDisplayStatus, earnedOnTimeAward } from "@/lib/domain/status";
 import { formatTimeRange, heightPx, topPx } from "@/lib/domain/time";
 import type { TaskWithRelations } from "@/lib/domain/types";
 import { cn } from "@/lib/utils";
@@ -38,9 +42,9 @@ export function TaskCard({
   const accent = task.category?.color ?? "var(--muted-foreground)";
   const completed = status === "COMPLETED";
   const cancelled = status === "CANCELLED";
-  // Reward on-time completion: completed with zero drag and zero auto delays.
-  const awarded =
-    completed && task.dragDelayCount === 0 && task.autoDelayCount === 0;
+  // Reward punctuality: started within 5 min of the planned start AND finished
+  // before the planned end (see earnedOnTimeAward).
+  const awarded = earnedOnTimeAward(task, firstClockInAt(task.clockSessions));
 
   return (
     <div

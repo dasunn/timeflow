@@ -43,6 +43,42 @@ export function computeDisplayStatus(
   return "NEW";
 }
 
+// ---- On-time award -------------------------------------------------------
+
+// Grace window: the first clock-in may be up to 5 minutes AFTER plannedStart.
+// Starting early is always fine (no lower bound).
+export const ON_TIME_START_GRACE_MS = 5 * 60 * 1000;
+
+// The "Completed on time" award is earned only when the task was actually
+// worked on punctually and finished before its deadline:
+//   1. status is COMPLETED,
+//   2. it was clocked in (started), and the FIRST clock-in is no later than
+//      plannedStart + 5 min (earlier is fine),
+//   3. it was completed before plannedEnd.
+// Note this is independent of the drag/auto delay counters.
+export function earnedOnTimeAward(
+  t: {
+    status: string;
+    plannedStart: Date;
+    plannedEnd: Date;
+    completedAt: Date | null;
+  },
+  firstClockInAt: Date | null,
+): boolean {
+  if (t.status !== "COMPLETED") return false;
+  if (!t.completedAt) return false;
+  if (!firstClockInAt) return false; // never started -> not eligible
+  // Started within the grace window after the scheduled start.
+  if (
+    firstClockInAt.getTime() >
+    t.plannedStart.getTime() + ON_TIME_START_GRACE_MS
+  ) {
+    return false;
+  }
+  // Finished before the scheduled end.
+  return t.completedAt.getTime() <= t.plannedEnd.getTime();
+}
+
 // Locking: once a task has been clocked in at least once OR is completed, it
 // can no longer be dragged.
 export function isLockable(hasClockIn: boolean, status: string): boolean {

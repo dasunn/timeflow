@@ -37,6 +37,7 @@ import {
   updateTask,
 } from "@/lib/actions/tasks";
 import {
+  firstClockInAt,
   hasAnyClockIn,
   hasOpenSession,
   openSession,
@@ -46,7 +47,7 @@ import {
   parseReminderValue,
   REMINDER_CHOICES,
 } from "@/lib/domain/reminders";
-import { computeDisplayStatus } from "@/lib/domain/status";
+import { computeDisplayStatus, earnedOnTimeAward } from "@/lib/domain/status";
 import {
   dateAtMinutes,
   formatClockDuration,
@@ -96,8 +97,7 @@ export function TaskDetailsDialog({
   const accent = task.category?.color ?? "var(--muted-foreground)";
   const isCancelled = task.status === "CANCELLED";
   const isCompleted = task.status === "COMPLETED";
-  const awarded =
-    isCompleted && task.dragDelayCount === 0 && task.autoDelayCount === 0;
+  const awarded = earnedOnTimeAward(task, firstClockInAt(sessions));
 
   // Editing is allowed only before any time is recorded (no clock-ins), and
   // not for finished/cancelled tasks.

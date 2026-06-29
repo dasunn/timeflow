@@ -51,6 +51,10 @@ model Task {
   // True once the task has >= 1 clock-in OR is completed. Disables dragging.
   isLocked Boolean @default(false)
 
+  // When the task was marked COMPLETED. Used to decide the on-time award
+  // (started within 5 min of plannedStart AND completed before plannedEnd).
+  completedAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

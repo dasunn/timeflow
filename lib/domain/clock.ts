@@ -10,6 +10,16 @@ export function hasAnyClockIn(sessions: SessionLike[]): boolean {
   return sessions.length > 0;
 }
 
+// The earliest clock-in across all sessions (when work first started), or null
+// if the task was never clocked in. Doesn't assume sessions are pre-sorted.
+export function firstClockInAt(sessions: SessionLike[]): Date | null {
+  if (sessions.length === 0) return null;
+  return sessions.reduce(
+    (earliest, s) => (s.clockInAt < earliest ? s.clockInAt : earliest),
+    sessions[0].clockInAt,
+  );
+}
+
 export function hasOpenSession(sessions: SessionLike[]): boolean {
   return sessions.some((s) => s.clockOutAt === null);
 }
