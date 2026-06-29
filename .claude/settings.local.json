@@ -33,7 +33,8 @@
       "PowerShell(Get-Process -Id 14260 -ErrorAction SilentlyContinue)",
       "PowerShell(Stop-Process -Force)",
       "PowerShell(Get-Process node -ErrorAction SilentlyContinue)",
-      "PowerShell(if \\($?\\) { \"stopped or absent\" })"
+      "PowerShell(if \\($?\\) { \"stopped or absent\" })",
+      "Bash(curl -s http://localhost:3000/)"
     ]
   }
 }
