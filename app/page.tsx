@@ -1,13 +1,12 @@
 import Link from "next/link";
 import { format } from "date-fns";
-import { ChevronLeftIcon, ChevronRightIcon, SettingsIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { AutoOverdueRunner } from "@/components/AutoOverdueRunner";
 import { ReminderRunner } from "@/components/ReminderRunner";
 import { CalendarWorkspace } from "@/components/calendar/CalendarWorkspace";
 import { buttonVariants } from "@/components/ui/button";
 import { getCategories, getNowPanelTasks, getTasksForWeek } from "@/lib/data";
 import { addDays, weekDays, weekStart } from "@/lib/domain/time";
-import { cn } from "@/lib/utils";
 
 function parseAnchor(dateParam?: string): Date {
   if (dateParam) {
@@ -40,13 +39,11 @@ export default async function Home({
   const label = `${format(start, "MMM d")} – ${format(addDays(start, 6), "MMM d, yyyy")}`;
 
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex h-full flex-col">
       <AutoOverdueRunner />
       <ReminderRunner />
       <header className="flex items-center gap-2 border-b px-4 py-2.5">
-        <h1 className="text-lg font-semibold">TimeFlow</h1>
-
-        <nav className="ml-4 flex items-center gap-1">
+        <nav className="flex items-center gap-1">
           <Link
             href={`/?date=${prev}`}
             aria-label="Previous week"
@@ -69,17 +66,6 @@ export default async function Home({
           </Link>
           <span className="ml-2 text-sm text-muted-foreground">{label}</span>
         </nav>
-
-        <Link
-          href="/categories"
-          className={cn(
-            buttonVariants({ variant: "ghost", size: "sm" }),
-            "ml-auto",
-          )}
-        >
-          <SettingsIcon />
-          Categories
-        </Link>
       </header>
 
       <CalendarWorkspace

@@ -40,3 +40,29 @@ export async function getNowPanelTasks(now: Date): Promise<TaskWithRelations[]> 
 export async function getCategories() {
   return prisma.category.findMany({ orderBy: { createdAt: "asc" } });
 }
+
+// Tasks for the dashboard: an optional [start, end) planned-start window and
+// an optional category filter, always excluding CANCELLED tasks (they don't
+// represent real planned or completed work).
+export async function getDashboardTasks({
+  start,
+  end,
+  categoryId,
+}: {
+  start: Date | null;
+  end: Date | null;
+  categoryId: string | null;
+}): Promise<TaskWithRelations[]> {
+  return prisma.task.findMany({
+    where: {
+      status: { not: "CANCELLED" },
+      ...(start && end ? { plannedStart: { gte: start, lt: end } } : {}),
+      ...(categoryId ? { categoryId } : {}),
+    },
+    include: {
+      category: true,
+      clockSessions: { orderBy: { clockInAt: "asc" } },
+    },
+    orderBy: { plannedStart: "asc" },
+  });
+}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import { Sidebar } from "@/components/nav/Sidebar";
 import "./globals.css";
 
 const fontSans = Inter({
@@ -29,7 +30,12 @@ export default function RootLayout({
       lang="en"
       className={`${fontSans.variable} ${fontMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="flex h-screen overflow-hidden">
+        <Sidebar />
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-auto">
+          {children}
+        </main>
+      </body>
     </html>
   );
 }
