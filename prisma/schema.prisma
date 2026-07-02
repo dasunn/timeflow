@@ -70,3 +70,23 @@ model ClockSession {
 
   task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
 }
+
+model Streak {
+  id        String   @id @default(cuid())
+  name      String
+  color     String // hex, e.g. #8b5cf6 — same convention as Category.color
+  createdAt DateTime @default(now())
+
+  entries StreakEntry[]
+}
+
+model StreakEntry {
+  id        String   @id @default(cuid())
+  streakId  String
+  date      String // "yyyy-MM-dd" local calendar day, no tz conversion
+  createdAt DateTime @default(now())
+
+  streak Streak @relation(fields: [streakId], references: [id], onDelete: Cascade)
+
+  @@unique([streakId, date])
+}

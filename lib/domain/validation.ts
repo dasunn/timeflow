@@ -11,6 +11,12 @@ export const categorySchema = z.object({
 });
 export type CategoryInput = z.infer<typeof categorySchema>;
 
+export const streakSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(60),
+  color: hexColor,
+});
+export type StreakInput = z.infer<typeof streakSchema>;
+
 // Times are passed as ISO strings from the client and coerced to Date.
 export const taskCreateSchema = z
   .object({

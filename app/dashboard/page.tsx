@@ -2,7 +2,8 @@ import { Suspense } from "react";
 import { CategoryDonutChart } from "@/components/dashboard/CategoryDonutChart";
 import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
 import { StatsSummary } from "@/components/dashboard/StatsSummary";
-import { getCategories, getDashboardTasks } from "@/lib/data";
+import { StreaksOverview } from "@/components/dashboard/StreaksOverview";
+import { getCategories, getDashboardTasks, getStreaks } from "@/lib/data";
 import {
   computeCategoryBreakdown,
   computeDashboardStats,
@@ -27,9 +28,10 @@ export default async function DashboardPage({
 
   const { start, end, label } = resolveDateRange(period, month, now);
 
-  const [tasks, categories] = await Promise.all([
+  const [tasks, categories, streaks] = await Promise.all([
     getDashboardTasks({ start, end, categoryId }),
     getCategories(),
+    getStreaks(),
   ]);
   const stats = computeDashboardStats(tasks, now);
   const categoryBreakdown = computeCategoryBreakdown(tasks, now);
@@ -51,6 +53,10 @@ export default async function DashboardPage({
 
       <div className="mt-4">
         <CategoryDonutChart slices={categoryBreakdown} />
+      </div>
+
+      <div className="mt-4">
+        <StreaksOverview streaks={streaks} today={now} />
       </div>
     </div>
   );

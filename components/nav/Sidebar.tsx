@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
+  FlameIcon,
   LayoutDashboardIcon,
   ListChecksIcon,
   PanelLeftCloseIcon,
@@ -15,6 +16,7 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboardIcon },
   { href: "/", label: "Tasks", icon: ListChecksIcon },
+  { href: "/streaks", label: "Streaks", icon: FlameIcon },
   { href: "/categories", label: "Categories", icon: SettingsIcon },
 ] as const;
 

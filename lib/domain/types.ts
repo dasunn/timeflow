@@ -1,4 +1,4 @@
-import type { Task, Category, ClockSession } from "@prisma/client";
+import type { Task, Category, ClockSession, Streak, StreakEntry } from "@prisma/client";
 
 // SQLite has no native enums. The first five are the values actually stored in
 // Task.status; RUNNING (a clock session is open) and PAUSED (clocked in before,
@@ -21,10 +21,15 @@ export const TASK_STATUSES: readonly TaskStatus[] = [
   "COMPLETED",
 ] as const;
 
-export type { Task, Category, ClockSession };
+export type { Task, Category, ClockSession, Streak, StreakEntry };
 
 // A task with the relations the calendar/now-panel need.
 export type TaskWithRelations = Task & {
   category: Category | null;
   clockSessions: ClockSession[];
+};
+
+// A streak with its daily completion entries.
+export type StreakWithEntries = Streak & {
+  entries: StreakEntry[];
 };

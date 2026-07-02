@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { addDays, startOfDay, weekStart } from "@/lib/domain/time";
-import type { TaskWithRelations } from "@/lib/domain/types";
+import type { StreakWithEntries, TaskWithRelations } from "@/lib/domain/types";
 
 // Tasks whose planned start falls within the Monday-anchored week.
 export async function getTasksForWeek(anchor: Date): Promise<TaskWithRelations[]> {
@@ -39,6 +39,13 @@ export async function getNowPanelTasks(now: Date): Promise<TaskWithRelations[]> 
 
 export async function getCategories() {
   return prisma.category.findMany({ orderBy: { createdAt: "asc" } });
+}
+
+export async function getStreaks(): Promise<StreakWithEntries[]> {
+  return prisma.streak.findMany({
+    include: { entries: true },
+    orderBy: { createdAt: "asc" },
+  });
 }
 
 // Tasks for the dashboard: an optional [start, end) planned-start window and
