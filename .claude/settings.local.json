@@ -34,7 +34,12 @@
       "PowerShell(Stop-Process -Force)",
       "PowerShell(Get-Process node -ErrorAction SilentlyContinue)",
       "PowerShell(if \\($?\\) { \"stopped or absent\" })",
-      "Bash(curl -s http://localhost:3000/)"
+      "Bash(curl -s http://localhost:3000/)",
+      "Bash(git -C /d/TimeFlow status --short)",
+      "Bash(git -C /d/TimeFlow diff --stat)",
+      "Bash(git -C /d/TimeFlow diff .claude/settings.local.json)",
+      "Bash(git -C /d/TimeFlow add .claude/settings.local.json)",
+      "Bash(git -C /d/TimeFlow commit -m ' *)"
     ]
   }
 }
