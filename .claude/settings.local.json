@@ -39,7 +39,8 @@
       "Bash(git -C /d/TimeFlow diff --stat)",
       "Bash(git -C /d/TimeFlow diff .claude/settings.local.json)",
       "Bash(git -C /d/TimeFlow add .claude/settings.local.json)",
-      "Bash(git -C /d/TimeFlow commit -m ' *)"
+      "Bash(git -C /d/TimeFlow commit -m ' *)",
+      "Bash(git -C /d/TimeFlow ls-files prisma/)"
     ]
   }
 }
