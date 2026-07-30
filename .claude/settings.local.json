@@ -40,7 +40,11 @@
       "Bash(git -C /d/TimeFlow diff .claude/settings.local.json)",
       "Bash(git -C /d/TimeFlow add .claude/settings.local.json)",
       "Bash(git -C /d/TimeFlow commit -m ' *)",
-      "Bash(git -C /d/TimeFlow ls-files prisma/)"
+      "Bash(git -C /d/TimeFlow ls-files prisma/)",
+      "Bash(gh auth *)",
+      "Bash(git config *)",
+      "Bash(grep -Ei '\\\\.env|\\\\.db$|\\\\.db-journal|secret|token|\\\\.pem')",
+      "Bash(turso --version)"
     ]
   }
 }
