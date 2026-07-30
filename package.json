@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "seed": "node prisma/seed.mjs",
+    "db:turso": "node --env-file=.env prisma/apply-turso-schema.mjs",
     "db:reset": "prisma migrate reset --force",
     "postinstall": "prisma generate"
   },
