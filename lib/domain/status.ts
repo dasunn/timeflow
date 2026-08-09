@@ -1,3 +1,4 @@
+import { isSameDay } from "./time";
 import type { TaskStatus } from "./types";
 
 // The minimal task shape the status engine reasons about.
@@ -19,7 +20,7 @@ export function isDelayed(t: {
 }
 
 // Effective status to DISPLAY. The stored `status` only holds the explicit
-// lifecycle states NEW/CANCELLED/COMPLETED; everything else is derived.
+// lifecycle states NEW/CANCELLED/COMPLETED/MISSED; everything else is derived.
 // Precedence: terminal states win, then the live clock lifecycle
 // (RUNNING / PAUSED once the task has been worked on), then PENDING (start
 // passed and never started — the urgent "not started on time" red state),
@@ -32,6 +33,9 @@ export function computeDisplayStatus(
 ): TaskStatus {
   if (t.status === "CANCELLED") return "CANCELLED";
   if (t.status === "COMPLETED") return "COMPLETED";
+  // MISSED is set by hand ("I'm never getting to this today") and, like the
+  // other terminal states, outranks everything derived from the clock.
+  if (t.status === "MISSED") return "MISSED";
   if (isRunning) return "RUNNING"; // a clock session is currently open
   if (hasClockIn) return "PAUSED"; // clocked in before, currently stopped
   // Past its planned start and never clocked in -> "not started on time".
@@ -87,10 +91,13 @@ export function isLockable(hasClockIn: boolean, status: string): boolean {
 
 // ---- Delay rules ----------------------------------------------------------
 
-// Manual drag delay: counts only when moved to a strictly LATER start.
-// Earlier or same slot never decreases (or changes) the count.
-export function isLaterDrag(oldStart: Date, newStart: Date): boolean {
-  return newStart.getTime() > oldStart.getTime();
+// Manual drag delay: counts only when the task is pushed out to a LATER
+// CALENDAR DAY. Reshuffling within the same day is just tidying the schedule,
+// not a slip, so it never touches the counter (and so never flips the card to
+// DELAYED). Moving earlier — same day or not — never counts either.
+export function isDelayingDrag(oldStart: Date, newStart: Date): boolean {
+  if (newStart.getTime() <= oldStart.getTime()) return false;
+  return !isSameDay(oldStart, newStart);
 }
 
 // Auto-overdue: end time has passed with no clock-in on a still-active task.
@@ -102,7 +109,13 @@ export function shouldAutoDelay(
   now: Date,
   hasClockIn: boolean,
 ): boolean {
-  if (t.status === "COMPLETED" || t.status === "CANCELLED") return false;
+  if (
+    t.status === "COMPLETED" ||
+    t.status === "CANCELLED" ||
+    t.status === "MISSED"
+  ) {
+    return false;
+  }
   if (hasClockIn) return false;
   if (t.autoDelayCount > 0) return false;
   return now.getTime() > t.plannedEnd.getTime();

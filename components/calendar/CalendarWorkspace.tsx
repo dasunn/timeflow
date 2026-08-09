@@ -18,6 +18,7 @@ import { TaskDetailsDialog } from "@/components/TaskDetailsDialog";
 import { NowProvider, useNow } from "@/components/now-context";
 import { NowPanel } from "@/components/now-panel/NowPanel";
 import { moveTask } from "@/lib/actions/tasks";
+import { isDelayingDrag } from "@/lib/domain/status";
 import {
   DRAG_SNAP_PX,
   durationMinutes,
@@ -104,7 +105,9 @@ export function CalendarWorkspace({
     if (newStart.getTime() === task.plannedStart.getTime()) return; // no-op
 
     const newEnd = new Date(newStart.getTime() + durMin * 60_000);
-    const later = newStart.getTime() > task.plannedStart.getTime();
+    // Only a move out to a LATER DAY counts as a delay — same-day reshuffles
+    // leave the counter (and the status) alone.
+    const delaying = isDelayingDrag(task.plannedStart, newStart);
 
     // Optimistic move (drag-delay rule mirrored client-side for instant feedback).
     setTasks((prev) =>
@@ -114,7 +117,7 @@ export function CalendarWorkspace({
               ...t,
               plannedStart: newStart,
               plannedEnd: newEnd,
-              dragDelayCount: later ? t.dragDelayCount + 1 : t.dragDelayCount,
+              dragDelayCount: delaying ? t.dragDelayCount + 1 : t.dragDelayCount,
             }
           : t,
       ),

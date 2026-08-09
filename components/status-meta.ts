@@ -14,6 +14,11 @@ export const STATUS_META: Record<TaskStatus, { label: string; className: string 
       "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
   },
   CANCELLED: { label: "Cancelled", className: "bg-muted text-muted-foreground" },
+  MISSED: {
+    label: "Missed",
+    className:
+      "bg-rose-200 text-rose-900 dark:bg-rose-900/70 dark:text-rose-100",
+  },
   COMPLETED: {
     label: "Done",
     className: "bg-emerald-600 text-white dark:bg-emerald-600 dark:text-white",

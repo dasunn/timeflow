@@ -1,7 +1,7 @@
 // TimeFlow — single-user local time management app.
 // SQLite via Prisma. No native enums in SQLite, so `status` is a String
-// constrained to NEW | PENDING | DELAYED | CANCELLED | COMPLETED in the
-// domain/validation layer (see lib/domain).
+// constrained to NEW | PENDING | DELAYED | CANCELLED | COMPLETED | MISSED in
+// the domain/validation layer (see lib/domain).
 
 generator client {
   // The libSQL driver adapter (see lib/db.ts) connects to Turso in production
@@ -31,7 +31,7 @@ model Task {
   categoryId  String?
   description String
 
-  // NEW | PENDING | DELAYED | CANCELLED | COMPLETED
+  // NEW | PENDING | DELAYED | CANCELLED | COMPLETED | MISSED
   status String @default("NEW")
 
   // Card position + height derive from these (local time, no tz conversion).
@@ -39,7 +39,7 @@ model Task {
   plannedEnd   DateTime
 
   // The two delay counters are tracked SEPARATELY and never merged.
-  dragDelayCount Int @default(0) // manual drag to a later slot
+  dragDelayCount Int @default(0) // manual drag out to a later DAY
   autoDelayCount Int @default(0) // end time passed with no clock-in
 
   // Reminder: minutes before plannedStart to fire a browser notification.

@@ -13,7 +13,7 @@ export async function runAutoOverdue(): Promise<{ updated: number }> {
   // updateMany can't filter on relations, so find eligible ids first.
   const eligible = await prisma.task.findMany({
     where: {
-      status: { notIn: ["COMPLETED", "CANCELLED"] },
+      status: { notIn: ["COMPLETED", "CANCELLED", "MISSED"] },
       autoDelayCount: 0,
       plannedEnd: { lt: now },
       clockSessions: { none: {} },

@@ -25,7 +25,7 @@ export async function claimDueReminders(): Promise<DueReminder[]> {
     where: {
       notifyMinutesBefore: { not: null },
       notifiedAt: null,
-      status: { notIn: ["COMPLETED", "CANCELLED"] },
+      status: { notIn: ["COMPLETED", "CANCELLED", "MISSED"] },
       plannedStart: { gte: now },
     },
     select: {

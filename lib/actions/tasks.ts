@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { isReminderChoice } from "@/lib/domain/reminders";
-import { isLaterDrag } from "@/lib/domain/status";
+import { isDelayingDrag } from "@/lib/domain/status";
 import { taskCreateSchema } from "@/lib/domain/validation";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
@@ -102,8 +102,8 @@ export async function setTaskReminder(
 }
 
 // Move a task to a new planned window (from a drag). Applies the drag-delay
-// rule (increment only when moved to a strictly later start) and rejects
-// locked tasks server-side.
+// rule (increment only when pushed out to a later DAY — same-day reshuffles
+// don't count as a slip) and rejects locked tasks server-side.
 export async function moveTask(
   taskId: string,
   newStartMs: number,
@@ -119,14 +119,14 @@ export async function moveTask(
     return { ok: false, error: "Invalid time range" };
   }
 
-  const later = isLaterDrag(task.plannedStart, newStart);
+  const delaying = isDelayingDrag(task.plannedStart, newStart);
 
   await prisma.task.update({
     where: { id: taskId },
     data: {
       plannedStart: newStart,
       plannedEnd: newEnd,
-      ...(later ? { dragDelayCount: { increment: 1 } } : {}),
+      ...(delaying ? { dragDelayCount: { increment: 1 } } : {}),
     },
   });
 
@@ -144,11 +144,32 @@ export async function cancelTask(taskId: string): Promise<ActionResult> {
   return { ok: true };
 }
 
-// Undo a cancel (back to NEW). Display status is re-derived from there.
-export async function reopenTask(taskId: string): Promise<ActionResult> {
+// Explicit "I'm not getting to this" — the day is written off but the task
+// still counts against completion (unlike CANCELLED, which is dropped from the
+// dashboard entirely). Recorded time is kept; the task is locked so it can no
+// longer be dragged around.
+export async function markTaskMissed(taskId: string): Promise<ActionResult> {
+  const open = await prisma.clockSession.findFirst({
+    where: { taskId, clockOutAt: null },
+  });
+  if (open) return { ok: false, error: "Clock out before marking missed" };
+
   await prisma.task.update({
     where: { id: taskId },
-    data: { status: "NEW" },
+    data: { status: "MISSED", isLocked: true },
+  });
+  revalidatePath("/");
+  return { ok: true };
+}
+
+// Undo a cancel / missed (back to NEW). Display status is re-derived from
+// there; the lock is released only when no time was ever recorded.
+export async function reopenTask(taskId: string): Promise<ActionResult> {
+  const recorded = await prisma.clockSession.count({ where: { taskId } });
+
+  await prisma.task.update({
+    where: { id: taskId },
+    data: { status: "NEW", isLocked: recorded > 0 },
   });
   revalidatePath("/");
   return { ok: true };

@@ -42,6 +42,7 @@ export function TaskCard({
   const accent = task.category?.color ?? "var(--muted-foreground)";
   const completed = status === "COMPLETED";
   const cancelled = status === "CANCELLED";
+  const missed = status === "MISSED";
   // Reward punctuality: started within 5 min of the planned start AND finished
   // before the planned end (see earnedOnTimeAward).
   const awarded = earnedOnTimeAward(task, firstClockInAt(task.clockSessions));
@@ -79,6 +80,8 @@ export function TaskCard({
             "animate-overdue border-red-300 bg-red-100 ring-2 ring-red-400 dark:border-red-800/70 dark:bg-red-950/60 dark:ring-red-500",
           completed &&
             "border-emerald-300 bg-emerald-100 dark:border-emerald-800/70 dark:bg-emerald-950/60",
+          missed &&
+            "border-rose-300 bg-rose-50 dark:border-rose-900/70 dark:bg-rose-950/40",
           cancelled && "opacity-60",
           isDragging && "shadow-lg ring-2 ring-ring",
         )}
@@ -102,6 +105,7 @@ export function TaskCard({
             "mt-0.5 line-clamp-2 leading-tight font-medium",
             cancelled && "text-muted-foreground line-through",
             completed && "text-emerald-900 dark:text-emerald-100",
+            missed && "text-rose-900 line-through dark:text-rose-100",
           )}
         >
           {task.description}
