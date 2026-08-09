@@ -1,4 +1,4 @@
-import { PauseIcon } from "lucide-react";
+import { CalendarXIcon, PauseIcon } from "lucide-react";
 import type { TaskStatus } from "@/lib/domain/types";
 import { cn } from "@/lib/utils";
 import { STATUS_META } from "./status-meta";
@@ -43,6 +43,9 @@ export function StatusBadge({
       {status === "PENDING" && <LiveDot tone="red" />}
       {status === "PAUSED" && (
         <PauseIcon className={size === "xs" ? "size-2.5" : "size-3"} />
+      )}
+      {status === "MISSED" && (
+        <CalendarXIcon className={size === "xs" ? "size-2.5" : "size-3"} />
       )}
       {meta.label}
     </span>

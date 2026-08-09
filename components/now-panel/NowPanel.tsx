@@ -41,7 +41,9 @@ export function NowPanel({ tasks }: { tasks: TaskWithRelations[] }) {
   const upcoming = tasks
     .filter(
       (t) =>
-        t.status !== "COMPLETED" && t.plannedStart.getTime() > now.getTime(),
+        t.status !== "COMPLETED" &&
+        t.status !== "MISSED" &&
+        t.plannedStart.getTime() > now.getTime(),
     )
     .sort((a, b) => a.plannedStart.getTime() - b.plannedStart.getTime())[0];
 
@@ -91,6 +93,7 @@ function NowTaskCard({ task, now }: { task: TaskWithRelations; now: Date }) {
   const runningMs = running ? now.getTime() - running.clockInAt.getTime() : 0;
   const accent = task.category?.color ?? "var(--muted-foreground)";
   const completed = task.status === "COMPLETED";
+  const missed = task.status === "MISSED";
   const awarded =
     completed && task.dragDelayCount === 0 && task.autoDelayCount === 0;
 
@@ -106,9 +109,11 @@ function NowTaskCard({ task, now }: { task: TaskWithRelations; now: Date }) {
         "rounded-lg border p-3 shadow-sm",
         completed
           ? "border-emerald-300 bg-emerald-100 ring-1 ring-emerald-300 dark:border-emerald-800/70 dark:bg-emerald-950/60 dark:ring-emerald-800"
-          : status === "RUNNING"
-            ? "animate-running bg-card ring-2 ring-emerald-400 dark:ring-emerald-500"
-            : "bg-card ring-2 ring-primary/15",
+          : missed
+            ? "border-rose-300 bg-rose-50 ring-1 ring-rose-300 dark:border-rose-900/70 dark:bg-rose-950/40 dark:ring-rose-900"
+            : status === "RUNNING"
+              ? "animate-running bg-card ring-2 ring-emerald-400 dark:ring-emerald-500"
+              : "bg-card ring-2 ring-primary/15",
       )}
       style={{ borderLeftColor: accent, borderLeftWidth: 4 }}
     >
@@ -137,7 +142,7 @@ function NowTaskCard({ task, now }: { task: TaskWithRelations; now: Date }) {
         </div>
       )}
 
-      {!completed && (
+      {!completed && !missed && (
         <div className="mt-3 flex gap-2">
           {open ? (
             <Button
@@ -155,7 +160,8 @@ function NowTaskCard({ task, now }: { task: TaskWithRelations; now: Date }) {
               Clock in
             </Button>
           )}
-          {anyClockIn && !open && (
+          {/* Available with or without a clock-in; only an open session blocks it. */}
+          {!open && (
             <Button
               size="sm"
               variant="secondary"

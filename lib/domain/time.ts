@@ -118,6 +118,22 @@ export function formatDuration(ms: number): string {
   return h === 0 ? `${m}m` : `${h}h ${m}m`;
 }
 
+// "3d 4h" / "2h 15m" / "45m" / "now" — how far ahead something is. Coarsens as
+// the horizon grows so a task three days out doesn't read "76h 12m".
+export function formatCountdown(ms: number): string {
+  const totalMin = Math.round(ms / 60_000);
+  if (totalMin <= 0) return "now";
+  if (totalMin < 60) return `${totalMin}m`;
+  const totalHours = Math.floor(totalMin / 60);
+  if (totalHours < 24) {
+    const m = totalMin % 60;
+    return m === 0 ? `${totalHours}h` : `${totalHours}h ${m}m`;
+  }
+  const days = Math.floor(totalHours / 24);
+  const h = totalHours % 24;
+  return h === 0 ? `${days}d` : `${days}d ${h}h`;
+}
+
 // "1:23:45" — for the live running timer (ticks every second).
 export function formatClockDuration(ms: number): string {
   const totalSec = Math.max(0, Math.floor(ms / 1000));

@@ -43,9 +43,9 @@ export function CategoryDonutChart({ slices }: { slices: CategoryTimeSlice[] }) 
   });
 
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Time by Category</CardTitle>
+        <CardTitle>Time by category</CardTitle>
         <div className="flex items-center gap-1 rounded-lg border border-input p-0.5">
           {(Object.keys(MODE_LABELS) as ViewMode[]).map((m) => (
             <button

@@ -13,7 +13,7 @@ export function StreaksOverview({
   today: Date;
 }) {
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
         <CardTitle>Streaks</CardTitle>
       </CardHeader>

@@ -1,6 +1,6 @@
 import type { Task, Category, ClockSession, Streak, StreakEntry } from "@prisma/client";
 
-// SQLite has no native enums. The first five are the values actually stored in
+// SQLite has no native enums. The first six are the values actually stored in
 // Task.status; RUNNING (a clock session is open) and PAUSED (clocked in before,
 // currently stopped) are DERIVED display-only states, never persisted.
 export type TaskStatus =
@@ -9,6 +9,7 @@ export type TaskStatus =
   | "DELAYED"
   | "CANCELLED"
   | "COMPLETED"
+  | "MISSED"
   | "RUNNING"
   | "PAUSED";
 
@@ -19,6 +20,7 @@ export const TASK_STATUSES: readonly TaskStatus[] = [
   "DELAYED",
   "CANCELLED",
   "COMPLETED",
+  "MISSED",
 ] as const;
 
 export type { Task, Category, ClockSession, Streak, StreakEntry };

@@ -1,6 +1,7 @@
 import { addMonths, format, startOfMonth } from "date-fns";
 import { addDays, startOfDay, weekStart } from "./time";
-import { trackedMs } from "./clock";
+import { hasAnyClockIn, hasOpenSession, trackedMs } from "./clock";
+import { computeDisplayStatus } from "./status";
 import type { TaskWithRelations } from "./types";
 
 export type DashboardPeriod = "today" | "week" | "month" | "all";
@@ -65,8 +66,32 @@ export function resolveDateRange(
 export interface DashboardStats {
   totalTasks: number;
   completedTasks: number;
+  /** Tasks the completion rate is measured against (see `isCountable`). */
+  countableTasks: number;
+  /** Still-future tasks held out of the rate — reported so the UI can say so. */
+  upcomingTasks: number;
   plannedMs: number;
   actualMs: number;
+}
+
+// Which tasks the completion percentage is measured against.
+//
+// A task that hasn't come due yet can't fairly be called "not completed", so
+// scheduling next week's work must never drag the number down. Everything that
+// has actually been put to the test counts: COMPLETED, MISSED, PENDING (start
+// passed, never begun), RUNNING / PAUSED (worked on), and DELAYED (already
+// slipped at least once, even if its new slot is still ahead).
+//
+// That leaves exactly one exclusion — NEW, i.e. purely future and never
+// slipped. CANCELLED is expected to be dropped by the caller's query.
+function isCountable(task: TaskWithRelations, now: Date): boolean {
+  const status = computeDisplayStatus(
+    task,
+    now,
+    hasAnyClockIn(task.clockSessions),
+    hasOpenSession(task.clockSessions),
+  );
+  return status !== "NEW";
 }
 
 // CANCELLED tasks are expected to already be excluded by the caller's query.
@@ -77,12 +102,21 @@ export function computeDashboardStats(
   let plannedMs = 0;
   let actualMs = 0;
   let completedTasks = 0;
+  let countableTasks = 0;
   for (const t of tasks) {
     plannedMs += Math.max(0, t.plannedEnd.getTime() - t.plannedStart.getTime());
     actualMs += trackedMs(t.clockSessions, now);
     if (t.status === "COMPLETED") completedTasks++;
+    if (isCountable(t, now)) countableTasks++;
   }
-  return { totalTasks: tasks.length, completedTasks, plannedMs, actualMs };
+  return {
+    totalTasks: tasks.length,
+    completedTasks,
+    countableTasks,
+    upcomingTasks: tasks.length - countableTasks,
+    plannedMs,
+    actualMs,
+  };
 }
 
 export interface CategoryTimeSlice {

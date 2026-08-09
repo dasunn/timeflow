@@ -48,6 +48,34 @@ export async function getStreaks(): Promise<StreakWithEntries[]> {
   });
 }
 
+// The next few tasks still ahead of `now`, for the dashboard's Upcoming card.
+// Deliberately NOT bound to the dashboard's period filter — "what's next" is
+// only useful when it can look past the end of the selected window — but it
+// does honour the category filter so the whole page stays consistent.
+export async function getUpcomingTasks({
+  now,
+  categoryId,
+  limit = 5,
+}: {
+  now: Date;
+  categoryId: string | null;
+  limit?: number;
+}): Promise<TaskWithRelations[]> {
+  return prisma.task.findMany({
+    where: {
+      status: { notIn: ["CANCELLED", "COMPLETED", "MISSED"] },
+      plannedStart: { gt: now },
+      ...(categoryId ? { categoryId } : {}),
+    },
+    include: {
+      category: true,
+      clockSessions: { orderBy: { clockInAt: "asc" } },
+    },
+    orderBy: { plannedStart: "asc" },
+    take: limit,
+  });
+}
+
 // Tasks for the dashboard: an optional [start, end) planned-start window and
 // an optional category filter, always excluding CANCELLED tasks (they don't
 // represent real planned or completed work).
