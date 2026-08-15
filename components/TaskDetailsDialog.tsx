@@ -6,6 +6,7 @@ import {
   BellIcon,
   CalendarXIcon,
   CheckIcon,
+  CopyIcon,
   PencilIcon,
   PlayIcon,
   PlusIcon,
@@ -76,10 +77,14 @@ export function TaskDetailsDialog({
   task,
   categories,
   onClose,
+  onDuplicate,
 }: {
   task: TaskWithRelations;
   categories: Category[];
   onClose: () => void;
+  // Hands the task off to the create dialog, pre-filled. Available in any
+  // state — repeating a finished task is the most common reason to copy one.
+  onDuplicate: (task: TaskWithRelations) => void;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -228,6 +233,18 @@ export function TaskDetailsDialog({
             </DialogTitle>
             {awarded && (
               <AwardIcon className="size-4 shrink-0 text-amber-500" />
+            )}
+            {!editing && (
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                aria-label="Duplicate task"
+                title="Duplicate task"
+                disabled={pending}
+                onClick={() => onDuplicate(task)}
+              >
+                <CopyIcon />
+              </Button>
             )}
             {canEdit && !editing && (
               <Button

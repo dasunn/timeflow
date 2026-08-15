@@ -22,10 +22,23 @@ import {
   formatTimeRange,
   isWithinPlanned,
 } from "@/lib/domain/time";
-import type { TaskWithRelations } from "@/lib/domain/types";
+import type {
+  BacklogTask,
+  Category,
+  TaskWithRelations,
+} from "@/lib/domain/types";
 import { cn } from "@/lib/utils";
+import { BacklogPanel } from "@/components/backlog/BacklogPanel";
 
-export function NowPanel({ tasks }: { tasks: TaskWithRelations[] }) {
+export function NowPanel({
+  tasks,
+  backlogTasks,
+  categories,
+}: {
+  tasks: TaskWithRelations[];
+  backlogTasks: BacklogTask[];
+  categories: Category[];
+}) {
   // Own 1-second clock for live timers; initial value is hydration-safe.
   const initial = useNow();
   const [now, setNow] = useState(initial);
@@ -56,7 +69,7 @@ export function NowPanel({ tasks }: { tasks: TaskWithRelations[] }) {
         </span>
       </div>
 
-      <div className="flex-1 space-y-3 overflow-auto p-3">
+      <div className="min-h-0 flex-1 space-y-3 overflow-auto p-3">
         {active.length === 0 ? (
           <div className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
             <p>Nothing scheduled right now.</p>
@@ -76,6 +89,8 @@ export function NowPanel({ tasks }: { tasks: TaskWithRelations[] }) {
           ))
         )}
       </div>
+
+      <BacklogPanel tasks={backlogTasks} categories={categories} />
     </aside>
   );
 }

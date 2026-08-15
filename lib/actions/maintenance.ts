@@ -13,6 +13,9 @@ export async function runAutoOverdue(): Promise<{ updated: number }> {
   // updateMany can't filter on relations, so find eligible ids first.
   const eligible = await prisma.task.findMany({
     where: {
+      // Backlog tasks have a placeholder window in the past — they'd all look
+      // overdue. They can't be late until they're actually scheduled.
+      isBacklog: false,
       status: { notIn: ["COMPLETED", "CANCELLED", "MISSED"] },
       autoDelayCount: 0,
       plannedEnd: { lt: now },

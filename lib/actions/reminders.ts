@@ -23,6 +23,7 @@ export async function claimDueReminders(): Promise<DueReminder[]> {
   // counts are small for a single-user app.)
   const candidates = await prisma.task.findMany({
     where: {
+      isBacklog: false, // nothing to remind about until it has a slot
       notifyMinutesBefore: { not: null },
       notifiedAt: null,
       status: { notIn: ["COMPLETED", "CANCELLED", "MISSED"] },

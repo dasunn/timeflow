@@ -20,6 +20,8 @@ CREATE TABLE "Task" (
     "status" TEXT NOT NULL DEFAULT 'NEW',
     "plannedStart" DATETIME NOT NULL,
     "plannedEnd" DATETIME NOT NULL,
+    "isBacklog" BOOLEAN NOT NULL DEFAULT false,
+    "estimatedMinutes" INTEGER,
     "dragDelayCount" INTEGER NOT NULL DEFAULT 0,
     "autoDelayCount" INTEGER NOT NULL DEFAULT 0,
     "notifyMinutesBefore" INTEGER,

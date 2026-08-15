@@ -5,7 +5,12 @@ import { AutoOverdueRunner } from "@/components/AutoOverdueRunner";
 import { ReminderRunner } from "@/components/ReminderRunner";
 import { CalendarWorkspace } from "@/components/calendar/CalendarWorkspace";
 import { buttonVariants } from "@/components/ui/button";
-import { getCategories, getNowPanelTasks, getTasksForWeek } from "@/lib/data";
+import {
+  getBacklogTasks,
+  getCategories,
+  getNowPanelTasks,
+  getTasksForWeek,
+} from "@/lib/data";
 import { addDays, weekDays, weekStart } from "@/lib/domain/time";
 
 function parseAnchor(dateParam?: string): Date {
@@ -27,9 +32,10 @@ export default async function Home({
   const days = weekDays(anchor);
   const now = new Date();
 
-  const [weekTasks, nowTasks, categories] = await Promise.all([
+  const [weekTasks, nowTasks, backlogTasks, categories] = await Promise.all([
     getTasksForWeek(anchor),
     getNowPanelTasks(now),
+    getBacklogTasks(),
     getCategories(),
   ]);
   const serverNow = now.getTime();
@@ -72,6 +78,7 @@ export default async function Home({
         days={days}
         weekTasks={weekTasks}
         nowTasks={nowTasks}
+        backlogTasks={backlogTasks}
         categories={categories}
         serverNow={serverNow}
       />

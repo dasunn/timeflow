@@ -2,40 +2,63 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
+import { MAX_OCCURRENCES } from "@/lib/domain/recurrence";
 import { isReminderChoice } from "@/lib/domain/reminders";
 import { isDelayingDrag } from "@/lib/domain/status";
 import { taskCreateSchema } from "@/lib/domain/validation";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
-// Create a task from the inline grid creation flow.
+// Create a task from the inline grid creation flow. A repeating task arrives as
+// its already-expanded occurrences: the client walks the rule so the calendar
+// days are the USER's local ones (the server may well be running in UTC), and
+// every occurrence is written as its own independent row.
 export async function createTask(input: {
   description: string;
   categoryId: string | null;
   plannedStartMs: number;
   plannedEndMs: number;
   notifyMinutesBefore: number | null;
+  // Further planned windows beyond the first — empty/absent for a one-off task.
+  repeatOccurrences?: { startMs: number; endMs: number }[];
 }): Promise<ActionResult> {
-  const parsed = taskCreateSchema.safeParse({
-    description: input.description,
-    categoryId: input.categoryId,
-    plannedStart: new Date(input.plannedStartMs),
-    plannedEnd: new Date(input.plannedEndMs),
-    notifyMinutesBefore: input.notifyMinutesBefore,
-  });
-  if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid task" };
+  const windows = [
+    { startMs: input.plannedStartMs, endMs: input.plannedEndMs },
+    ...(input.repeatOccurrences ?? []),
+  ];
+  if (windows.length > MAX_OCCURRENCES) {
+    return {
+      ok: false,
+      error: `A repeat can create at most ${MAX_OCCURRENCES} tasks — shorten the date range`,
+    };
   }
 
-  await prisma.task.create({
-    data: {
+  const rows = [];
+  for (const slot of windows) {
+    const parsed = taskCreateSchema.safeParse({
+      description: input.description,
+      categoryId: input.categoryId,
+      plannedStart: new Date(slot.startMs),
+      plannedEnd: new Date(slot.endMs),
+      notifyMinutesBefore: input.notifyMinutesBefore,
+    });
+    if (!parsed.success) {
+      return {
+        ok: false,
+        error: parsed.error.issues[0]?.message ?? "Invalid task",
+      };
+    }
+    rows.push({
       description: parsed.data.description,
       categoryId: parsed.data.categoryId ?? null,
       plannedStart: parsed.data.plannedStart,
       plannedEnd: parsed.data.plannedEnd,
       notifyMinutesBefore: parsed.data.notifyMinutesBefore ?? null,
-    },
-  });
+    });
+  }
+
+  // All or nothing — a half-written series would be worse than none.
+  await prisma.$transaction(rows.map((data) => prisma.task.create({ data })));
 
   revalidatePath("/");
   return { ok: true };

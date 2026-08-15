@@ -13,19 +13,30 @@ import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { CreateTaskDialog } from "@/components/CreateTaskDialog";
+import {
+  CreateTaskDialog,
+  type CreateTaskTarget,
+} from "@/components/CreateTaskDialog";
 import { TaskDetailsDialog } from "@/components/TaskDetailsDialog";
 import { NowProvider, useNow } from "@/components/now-context";
 import { NowPanel } from "@/components/now-panel/NowPanel";
+import { scheduleBacklogTask } from "@/lib/actions/backlog";
 import { moveTask } from "@/lib/actions/tasks";
+import { scheduledMinutes } from "@/lib/domain/backlog";
 import { isDelayingDrag } from "@/lib/domain/status";
 import {
   DRAG_SNAP_PX,
   durationMinutes,
   isSameDay,
+  MINUTES_PER_DAY,
+  minutesSinceMidnight,
   startFromOffsetPx,
 } from "@/lib/domain/time";
-import type { Category, TaskWithRelations } from "@/lib/domain/types";
+import type {
+  BacklogTask,
+  Category,
+  TaskWithRelations,
+} from "@/lib/domain/types";
 import { cn } from "@/lib/utils";
 import { DayColumn } from "./DayColumn";
 import { GUTTER_PX, MIN_COL_PX } from "./grid";
@@ -65,21 +76,22 @@ export function CalendarWorkspace({
   days,
   weekTasks,
   nowTasks,
+  backlogTasks,
   categories,
   serverNow,
 }: {
   days: Date[];
   weekTasks: TaskWithRelations[];
   nowTasks: TaskWithRelations[];
+  backlogTasks: BacklogTask[];
   categories: Category[];
   serverNow: number;
 }) {
   const router = useRouter();
   const [tasks, setTasks] = useState(weekTasks);
-  const [createTarget, setCreateTarget] = useState<{
-    day: Date;
-    startMinutes: number;
-  } | null>(null);
+  const [createTarget, setCreateTarget] = useState<CreateTaskTarget | null>(
+    null,
+  );
   const [detailsTaskId, setDetailsTaskId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
@@ -96,8 +108,29 @@ export function CalendarWorkspace({
 
     const day = over.data.current?.day as Date | undefined;
     const translated = active.rect.current.translated;
+    if (!day || !translated) return;
+
+    // Dragged in from the backlog: give it the slot it was dropped on, sized
+    // by its estimate. It has no old window, so nothing counts as a delay.
+    const backlogTask = active.data.current?.backlogTask as
+      | BacklogTask
+      | undefined;
+    if (backlogTask) {
+      const minutes = scheduledMinutes(backlogTask.estimatedMinutes);
+      const start = startFromOffsetPx(
+        day,
+        translated.top - over.rect.top,
+        minutes,
+      );
+      startTransition(async () => {
+        await scheduleBacklogTask(backlogTask.id, start.getTime());
+        router.refresh();
+      });
+      return;
+    }
+
     const task = tasks.find((t) => t.id === active.id);
-    if (!day || !translated || !task || task.isLocked) return;
+    if (!task || task.isLocked) return;
 
     const durMin = durationMinutes(task.plannedStart, task.plannedEnd);
     const offsetTop = translated.top - over.rect.top;
@@ -136,6 +169,25 @@ export function CalendarWorkspace({
   const detailsTask = detailsTaskId
     ? (tasks.find((t) => t.id === detailsTaskId) ?? null)
     : null;
+
+  // Duplicate: close the details view and reopen the create dialog pre-filled
+  // with the task's plan, so the copy can be retimed (or made repeating).
+  function duplicateTask(task: TaskWithRelations) {
+    setDetailsTaskId(null);
+    const endMinutes = minutesSinceMidnight(task.plannedEnd);
+    setCreateTarget({
+      day: task.plannedStart,
+      startMinutes: minutesSinceMidnight(task.plannedStart),
+      // A task ending at exactly midnight reads as minute 0 — clamp it back to
+      // the end of its own day so the copy stays a valid same-day window.
+      endMinutes: endMinutes === 0 ? MINUTES_PER_DAY - 1 : endMinutes,
+      duplicateOf: {
+        description: task.description,
+        categoryId: task.categoryId,
+        notifyMinutesBefore: task.notifyMinutesBefore,
+      },
+    });
+  }
 
   return (
     <NowProvider initial={serverNow}>
@@ -187,9 +239,14 @@ export function CalendarWorkspace({
               </div>
             </div>
           </div>
-        </DndContext>
 
-        <NowPanel tasks={nowTasks} />
+          {/* Inside the DndContext so backlog cards can be dragged onto the grid. */}
+          <NowPanel
+            tasks={nowTasks}
+            backlogTasks={backlogTasks}
+            categories={categories}
+          />
+        </DndContext>
       </div>
 
       {createTarget && (
@@ -205,6 +262,7 @@ export function CalendarWorkspace({
           task={detailsTask}
           categories={categories}
           onClose={() => setDetailsTaskId(null)}
+          onDuplicate={duplicateTask}
         />
       )}
     </NowProvider>

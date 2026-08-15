@@ -38,6 +38,15 @@ model Task {
   plannedStart DateTime
   plannedEnd   DateTime
 
+  // Backlog: a task parked WITHOUT a slot on the calendar. Its planned window
+  // is an inert placeholder (start === end, zero length) that must never be
+  // read as a schedule — every scheduled query filters `isBacklog: false`.
+  // Dragging the task onto the grid writes a real window and clears the flag.
+  isBacklog Boolean @default(false)
+  // Rough size of a backlog task ("about 45 minutes"), used as the duration
+  // when it lands on the calendar. null = fall back to the 1h default.
+  estimatedMinutes Int?
+
   // The two delay counters are tracked SEPARATELY and never merged.
   dragDelayCount Int @default(0) // manual drag out to a later DAY
   autoDelayCount Int @default(0) // end time passed with no clock-in
