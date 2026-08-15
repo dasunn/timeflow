@@ -1,13 +1,21 @@
 import { prisma } from "@/lib/db";
 import { addDays, startOfDay, weekStart } from "@/lib/domain/time";
-import type { StreakWithEntries, TaskWithRelations } from "@/lib/domain/types";
+import type {
+  BacklogTask,
+  StreakWithEntries,
+  TaskWithRelations,
+} from "@/lib/domain/types";
+
+// Backlog rows carry a placeholder planned window, so EVERY query about
+// scheduled work has to exclude them (see Task.isBacklog in schema.prisma).
+const SCHEDULED = { isBacklog: false } as const;
 
 // Tasks whose planned start falls within the Monday-anchored week.
 export async function getTasksForWeek(anchor: Date): Promise<TaskWithRelations[]> {
   const start = weekStart(anchor);
   const end = addDays(start, 7);
   return prisma.task.findMany({
-    where: { plannedStart: { gte: start, lt: end } },
+    where: { ...SCHEDULED, plannedStart: { gte: start, lt: end } },
     include: {
       category: true,
       clockSessions: { orderBy: { clockInAt: "asc" } },
@@ -23,6 +31,7 @@ export async function getNowPanelTasks(now: Date): Promise<TaskWithRelations[]> 
   const dayEnd = addDays(dayStart, 1);
   return prisma.task.findMany({
     where: {
+      ...SCHEDULED,
       status: { not: "CANCELLED" },
       OR: [
         { plannedStart: { gte: dayStart, lt: dayEnd } },
@@ -63,6 +72,7 @@ export async function getUpcomingTasks({
 }): Promise<TaskWithRelations[]> {
   return prisma.task.findMany({
     where: {
+      ...SCHEDULED,
       status: { notIn: ["CANCELLED", "COMPLETED", "MISSED"] },
       plannedStart: { gt: now },
       ...(categoryId ? { categoryId } : {}),
@@ -90,6 +100,7 @@ export async function getDashboardTasks({
 }): Promise<TaskWithRelations[]> {
   return prisma.task.findMany({
     where: {
+      ...SCHEDULED,
       status: { not: "CANCELLED" },
       ...(start && end ? { plannedStart: { gte: start, lt: end } } : {}),
       ...(categoryId ? { categoryId } : {}),
@@ -99,5 +110,16 @@ export async function getDashboardTasks({
       clockSessions: { orderBy: { clockInAt: "asc" } },
     },
     orderBy: { plannedStart: "asc" },
+  });
+}
+
+// The backlog: parked tasks with no calendar slot, newest last so the list
+// reads in the order things were added. Never filtered by date — that's the
+// whole point of them.
+export async function getBacklogTasks(): Promise<BacklogTask[]> {
+  return prisma.task.findMany({
+    where: { isBacklog: true, status: { not: "CANCELLED" } },
+    include: { category: true },
+    orderBy: { createdAt: "asc" },
   });
 }

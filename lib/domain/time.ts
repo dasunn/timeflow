@@ -102,6 +102,18 @@ export function timeToMinutes(value: string): number {
   return (Number(h) || 0) * 60 + (Number(m) || 0);
 }
 
+// "yyyy-MM-dd" <-> local calendar day, for <input type="date"> values. Parsed
+// by hand rather than `new Date(value)`, which would read it as UTC midnight
+// and land on the previous day west of Greenwich.
+export function toDateInput(date: Date): string {
+  return format(date, "yyyy-MM-dd");
+}
+export function dateFromInput(value: string): Date {
+  const [y, m, d] = value.split("-").map(Number);
+  if (!y || !m || !d) return new Date(NaN);
+  return new Date(y, m - 1, d);
+}
+
 // Label for a gutter slot index (0 => "00:00", 47 => "23:30").
 export function slotLabel(slotIndex: number): string {
   const minutes = slotIndex * SLOT_MINUTES;

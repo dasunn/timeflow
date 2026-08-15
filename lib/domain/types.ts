@@ -31,6 +31,12 @@ export type TaskWithRelations = Task & {
   clockSessions: ClockSession[];
 };
 
+// A parked task (Task.isBacklog). It has no meaningful planned window and
+// can't be clocked until it's scheduled, so only the category comes along.
+export type BacklogTask = Task & {
+  category: Category | null;
+};
+
 // A streak with its daily completion entries.
 export type StreakWithEntries = Streak & {
   entries: StreakEntry[];

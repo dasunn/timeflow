@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isEstimateChoice } from "@/lib/domain/backlog";
 import { isReminderChoice } from "@/lib/domain/reminders";
 
 const hexColor = z
@@ -37,6 +38,21 @@ export const taskCreateSchema = z
     path: ["plannedEnd"],
   });
 export type TaskCreateInput = z.infer<typeof taskCreateSchema>;
+
+// A backlog task: no planned window at all, just what to do and roughly how
+// long it takes. Deliberately has no reminder — nothing to remind about until
+// it's on the calendar.
+export const backlogTaskSchema = z.object({
+  description: z.string().trim().min(1, "Description is required").max(500),
+  categoryId: z.string().nullable().optional(),
+  estimatedMinutes: z
+    .number()
+    .int()
+    .refine(isEstimateChoice, "Invalid estimate")
+    .nullable()
+    .optional(),
+});
+export type BacklogTaskInput = z.infer<typeof backlogTaskSchema>;
 
 // Manual edit of a clock session's times (after the fact).
 export const sessionEditSchema = z
