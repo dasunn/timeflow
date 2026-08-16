@@ -43,7 +43,7 @@ export function StreakCard({
   }
 
   return (
-    <li className="flex items-center gap-3 rounded-lg border p-3">
+    <li className="flex flex-wrap items-center gap-3 rounded-lg border p-3">
       <span
         className="size-5 shrink-0 rounded-full ring-1 ring-black/10"
         style={{ backgroundColor: streak.color }}

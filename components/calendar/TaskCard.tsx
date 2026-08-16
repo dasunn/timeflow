@@ -16,7 +16,6 @@ import {
 } from "@/lib/domain/clock";
 import { computeDisplayStatus, earnedOnTimeAward } from "@/lib/domain/status";
 import { formatTimeRange, heightPx, topPx } from "@/lib/domain/time";
-import type { TaskWithRelations } from "@/lib/domain/types";
 import { cn } from "@/lib/utils";
 import type { LaidOutTask } from "./layout";
 

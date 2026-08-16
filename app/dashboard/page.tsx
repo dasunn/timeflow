@@ -45,7 +45,7 @@ export default async function DashboardPage({
   const categoryBreakdown = computeCategoryBreakdown(tasks, now);
 
   return (
-    <div className="mx-auto w-full max-w-6xl p-6 lg:p-8">
+    <div className="mx-auto w-full max-w-6xl p-4 sm:p-6 lg:p-8">
       {/* Title and filters share one row so neither spans the full width. */}
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>

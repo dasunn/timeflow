@@ -201,6 +201,9 @@ function BacklogChip({
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  // Deleting a parked task is permanent, so the trash press flips to a small
+  // Yes/No confirm (same pattern as categories/streaks) instead of firing.
+  const [confirming, setConfirming] = useState(false);
 
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({ id: task.id, data: { backlogTask: task } });
@@ -230,25 +233,52 @@ function BacklogChip({
       <span className="min-w-0 flex-1 truncate font-medium">
         {task.description}
       </span>
-      <span className="shrink-0 text-[10px] text-muted-foreground tabular-nums">
-        {formatEstimate(scheduledMinutes(task.estimatedMinutes))}
-      </span>
-      <Button
-        size="icon-xs"
-        variant="ghost"
-        aria-label={`Delete ${task.description}`}
-        disabled={disabled || pending}
-        // Keep the press off the drag sensor so a delete never starts a drag.
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={() =>
-          startTransition(async () => {
-            await deleteBacklogTask(task.id);
-            router.refresh();
-          })
-        }
-      >
-        <Trash2Icon />
-      </Button>
+      {confirming ? (
+        // Keep presses off the drag sensor so confirming never starts a drag.
+        <span
+          className="flex shrink-0 items-center gap-1"
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <Button
+            size="xs"
+            variant="destructive"
+            disabled={disabled || pending}
+            onClick={() =>
+              startTransition(async () => {
+                await deleteBacklogTask(task.id);
+                router.refresh();
+              })
+            }
+          >
+            Delete
+          </Button>
+          <Button
+            size="xs"
+            variant="outline"
+            disabled={pending}
+            onClick={() => setConfirming(false)}
+          >
+            Keep
+          </Button>
+        </span>
+      ) : (
+        <>
+          <span className="shrink-0 text-[10px] text-muted-foreground tabular-nums">
+            {formatEstimate(scheduledMinutes(task.estimatedMinutes))}
+          </span>
+          <Button
+            size="icon-xs"
+            variant="ghost"
+            aria-label={`Delete ${task.description}`}
+            disabled={disabled || pending}
+            // Keep the press off the drag sensor so a delete never starts a drag.
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => setConfirming(true)}
+          >
+            <Trash2Icon />
+          </Button>
+        </>
+      )}
     </div>
   );
 }
