@@ -10,7 +10,7 @@ export default async function StreaksPage() {
   const streaks = await getStreaks();
 
   return (
-    <div className="mx-auto max-w-2xl p-6">
+    <div className="mx-auto max-w-2xl p-4 sm:p-6">
       <header className="mb-6">
         <h1 className="text-xl font-semibold">Streaks</h1>
       </header>

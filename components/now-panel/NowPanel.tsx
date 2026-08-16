@@ -1,7 +1,13 @@
 "use client";
 
 import { format } from "date-fns";
-import { AwardIcon, CheckIcon, PlayIcon, SquareIcon } from "lucide-react";
+import {
+  AwardIcon,
+  CheckIcon,
+  PlayIcon,
+  SquareIcon,
+  XIcon,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { useNow } from "@/components/now-context";
@@ -9,12 +15,13 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { clockIn, clockOut, completeTask } from "@/lib/actions/clock";
 import {
+  firstClockInAt,
   hasAnyClockIn,
   hasOpenSession,
   openSession,
   trackedMs,
 } from "@/lib/domain/clock";
-import { computeDisplayStatus } from "@/lib/domain/status";
+import { computeDisplayStatus, earnedOnTimeAward } from "@/lib/domain/status";
 import {
   formatClockDuration,
   formatDuration,
@@ -34,10 +41,16 @@ export function NowPanel({
   tasks,
   backlogTasks,
   categories,
+  mobileOpen = false,
+  onMobileClose,
 }: {
   tasks: TaskWithRelations[];
   backlogTasks: BacklogTask[];
   categories: Category[];
+  // Below lg the panel is hidden by default and slides in as an overlay; from
+  // lg up it is always docked and these two props are inert.
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
 }) {
   // Own 1-second clock for live timers; initial value is hydration-safe.
   const initial = useNow();
@@ -61,11 +74,32 @@ export function NowPanel({
     .sort((a, b) => a.plannedStart.getTime() - b.plannedStart.getTime())[0];
 
   return (
-    <aside className="hidden w-80 shrink-0 flex-col border-l bg-muted/20 lg:flex">
+    <aside
+      className={cn(
+        "w-80 shrink-0 flex-col border-l bg-muted/20",
+        mobileOpen
+          ? // Mobile overlay: fixed slide-over on the right, docked from lg up.
+            "fixed inset-y-0 right-0 z-50 flex w-[min(20rem,85vw)] bg-background shadow-2xl lg:static lg:z-auto lg:w-80 lg:bg-muted/20 lg:shadow-none"
+          : "hidden lg:flex",
+      )}
+    >
       <div className="flex items-center justify-between border-b px-4 py-3">
         <h2 className="font-semibold">Now</h2>
-        <span className="text-sm text-muted-foreground tabular-nums">
-          {format(now, "HH:mm:ss")}
+        <span className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground tabular-nums">
+            {format(now, "HH:mm:ss")}
+          </span>
+          {onMobileClose && (
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              className="lg:hidden"
+              aria-label="Close panel"
+              onClick={onMobileClose}
+            >
+              <XIcon />
+            </Button>
+          )}
         </span>
       </div>
 
@@ -109,8 +143,9 @@ function NowTaskCard({ task, now }: { task: TaskWithRelations; now: Date }) {
   const accent = task.category?.color ?? "var(--muted-foreground)";
   const completed = task.status === "COMPLETED";
   const missed = task.status === "MISSED";
-  const awarded =
-    completed && task.dragDelayCount === 0 && task.autoDelayCount === 0;
+  // Same criterion as the calendar card and details dialog (earnedOnTimeAward):
+  // started within the grace window AND finished before the planned end.
+  const awarded = earnedOnTimeAward(task, firstClockInAt(sessions));
 
   const run = (fn: (id: string) => Promise<unknown>) =>
     startTransition(async () => {

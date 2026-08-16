@@ -89,6 +89,32 @@ export function isLockable(hasClockIn: boolean, status: string): boolean {
   return hasClockIn || status === "COMPLETED";
 }
 
+// ---- Permanent deletion ---------------------------------------------------
+
+// Deleting a scheduled task is allowed ONLY while it is still ahead of its
+// planned start — i.e. before computeDisplayStatus would call it PENDING. Up to
+// that moment the row is pure intention: nothing happened, so there is nothing
+// worth keeping and the honest fix for a mistake is to remove it. Once the
+// start passes, the task is part of the day's record and the outcome must be
+// stated instead — cancel it, or mark it missed.
+//
+// Two extra guards for tasks touched EARLY (both legal before plannedStart):
+// recorded time is real history, and COMPLETED / MISSED are stated outcomes the
+// dashboard counts. Either one keeps the row.
+export function canDeleteTask(
+  t: { status: string; plannedStart: Date },
+  now: Date,
+  hasClockIn: boolean,
+): boolean {
+  if (t.status === "COMPLETED" || t.status === "MISSED") return false;
+  if (hasClockIn) return false;
+  return now.getTime() < t.plannedStart.getTime();
+}
+
+// Why a delete was refused, for the message the user actually sees.
+export const DELETE_BLOCKED_MESSAGE =
+  "This task has already started — cancel it or mark it missed instead";
+
 // ---- Delay rules ----------------------------------------------------------
 
 // Manual drag delay: counts only when the task is pushed out to a LATER

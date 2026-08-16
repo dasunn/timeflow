@@ -102,9 +102,33 @@ export async function completeTask(taskId: string): Promise<ActionResult> {
   return { ok: true };
 }
 
-// Delete a session (e.g. to remove an accidental clock-in/out).
+// Delete a session (e.g. to remove an accidental clock-in/out). If that was
+// the last recorded time, the lock is released again — the lock exists because
+// time was recorded (see isLockable), so with no sessions left there's nothing
+// to protect. COMPLETED / MISSED keep their lock: those are stated outcomes,
+// and reopenTask is the path that reconsiders them.
 export async function deleteClockSession(id: string): Promise<ActionResult> {
+  const session = await prisma.clockSession.findUnique({
+    where: { id },
+    select: { taskId: true },
+  });
+  if (!session) return { ok: false, error: "Session not found" };
+
   await prisma.clockSession.delete({ where: { id } });
+
+  const remaining = await prisma.clockSession.count({
+    where: { taskId: session.taskId },
+  });
+  if (remaining === 0) {
+    await prisma.task.updateMany({
+      where: {
+        id: session.taskId,
+        status: { notIn: ["COMPLETED", "MISSED"] },
+      },
+      data: { isLocked: false },
+    });
+  }
+
   revalidatePath("/");
   return { ok: true };
 }

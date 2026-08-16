@@ -11,8 +11,10 @@ import {
 } from "@dnd-kit/core";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { format } from "date-fns";
+import { ListTodoIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
+import { Button } from "@/components/ui/button";
 import {
   CreateTaskDialog,
   type CreateTaskTarget,
@@ -93,10 +95,18 @@ export function CalendarWorkspace({
     null,
   );
   const [detailsTaskId, setDetailsTaskId] = useState<string | null>(null);
+  // Below lg the Now/Backlog panel is an overlay toggled by a floating button.
+  const [panelOpen, setPanelOpen] = useState(false);
   const [, startTransition] = useTransition();
 
   // Re-sync to server truth whenever fresh data arrives (after router.refresh).
-  useEffect(() => setTasks(weekTasks), [weekTasks]);
+  // Adjusted during render (not in an effect) so the stale optimistic list is
+  // never painted — React re-renders immediately with the fresh props.
+  const [prevWeekTasks, setPrevWeekTasks] = useState(weekTasks);
+  if (prevWeekTasks !== weekTasks) {
+    setPrevWeekTasks(weekTasks);
+    setTasks(weekTasks);
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -240,13 +250,36 @@ export function CalendarWorkspace({
             </div>
           </div>
 
+          {/* Backdrop for the mobile slide-over; tap to dismiss. */}
+          {panelOpen && (
+            <div
+              className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+              onClick={() => setPanelOpen(false)}
+              aria-hidden
+            />
+          )}
+
           {/* Inside the DndContext so backlog cards can be dragged onto the grid. */}
           <NowPanel
             tasks={nowTasks}
             backlogTasks={backlogTasks}
             categories={categories}
+            mobileOpen={panelOpen}
+            onMobileClose={() => setPanelOpen(false)}
           />
         </DndContext>
+
+        {/* Floating toggle for the panel — only below lg, where it's hidden. */}
+        {!panelOpen && (
+          <Button
+            size="icon-lg"
+            className="fixed right-4 bottom-4 z-40 rounded-full shadow-lg lg:hidden"
+            aria-label="Open Now panel and backlog"
+            onClick={() => setPanelOpen(true)}
+          >
+            <ListTodoIcon />
+          </Button>
+        )}
       </div>
 
       {createTarget && (

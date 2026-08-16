@@ -69,8 +69,9 @@ export async function scheduleBacklogTask(
   return { ok: true };
 }
 
-// Remove a parked task for good. Only ever deletes backlog rows — scheduled
-// work is cancelled, not deleted, so its history survives.
+// Remove a parked task for good. Only ever deletes backlog rows: a parked task
+// has no slot, so it can be dropped at any time. Scheduled work goes through
+// deleteTask, which only lets go of a task that hasn't reached its start yet.
 export async function deleteBacklogTask(taskId: string): Promise<ActionResult> {
   const { count } = await prisma.task.deleteMany({
     where: { id: taskId, isBacklog: true },

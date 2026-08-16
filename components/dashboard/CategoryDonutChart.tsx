@@ -28,18 +28,20 @@ export function CategoryDonutChart({ slices }: { slices: CategoryTimeSlice[] }) 
   const total = values.reduce((sum, s) => sum + s.ms, 0);
   const nonZero = values.filter((s) => s.ms > 0);
 
-  let offset = 0;
-  const arcs = nonZero.map((slice) => {
+  // Each arc starts where the previous ones end; the offset is a pure prefix
+  // sum (n is tiny) so nothing is mutated during render.
+  const arcs = nonZero.map((slice, i) => {
     const fraction = slice.ms / total;
     const dash = fraction * CIRCUMFERENCE;
-    const arc = {
+    const before = nonZero
+      .slice(0, i)
+      .reduce((sum, s) => sum + (s.ms / total) * CIRCUMFERENCE, 0);
+    return {
       ...slice,
       dasharray: `${dash} ${CIRCUMFERENCE - dash}`,
-      dashoffset: -offset,
+      dashoffset: -before,
       fraction,
     };
-    offset += dash;
-    return arc;
   });
 
   return (

@@ -48,8 +48,8 @@ export default async function Home({
     <div className="flex h-full flex-col">
       <AutoOverdueRunner />
       <ReminderRunner />
-      <header className="flex items-center gap-2 border-b px-4 py-2.5">
-        <nav className="flex items-center gap-1">
+      <header className="flex items-center gap-2 border-b px-3 py-2.5 sm:px-4">
+        <nav className="flex min-w-0 items-center gap-1">
           <Link
             href={`/?date=${prev}`}
             aria-label="Previous week"
@@ -70,7 +70,9 @@ export default async function Home({
           >
             <ChevronRightIcon />
           </Link>
-          <span className="ml-2 text-sm text-muted-foreground">{label}</span>
+          <span className="ml-2 truncate text-sm text-muted-foreground">
+            {label}
+          </span>
         </nav>
       </header>
 
