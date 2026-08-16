@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { MAX_OCCURRENCES } from "@/lib/domain/recurrence";
 import { isReminderChoice } from "@/lib/domain/reminders";
-import { isDelayingDrag } from "@/lib/domain/status";
+import {
+  canDeleteTask,
+  DELETE_BLOCKED_MESSAGE,
+  isDelayingDrag,
+} from "@/lib/domain/status";
 import { taskCreateSchema } from "@/lib/domain/validation";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
@@ -185,14 +189,53 @@ export async function markTaskMissed(taskId: string): Promise<ActionResult> {
   return { ok: true };
 }
 
+// Permanent deletion — the pre-PENDING escape hatch. Only a task that hasn't
+// reached its planned start (and was never clocked or closed out) can go; see
+// canDeleteTask for the rule. Anything later keeps its row and is cancelled or
+// marked missed instead, so the day's record stays honest. Clock sessions
+// cascade, but by the rule there are none.
+export async function deleteTask(taskId: string): Promise<ActionResult> {
+  const task = await prisma.task.findUnique({
+    where: { id: taskId },
+    include: { _count: { select: { clockSessions: true } } },
+  });
+  if (!task) return { ok: false, error: "Task not found" };
+  // Parked rows have a placeholder window that must never be read as a
+  // schedule, so the time rule below is meaningless for them — the backlog has
+  // its own delete (deleteBacklogTask).
+  if (task.isBacklog) {
+    return { ok: false, error: "Delete parked tasks from the backlog list" };
+  }
+  if (!canDeleteTask(task, new Date(), task._count.clockSessions > 0)) {
+    return { ok: false, error: DELETE_BLOCKED_MESSAGE };
+  }
+
+  // Re-state the rule as a WHERE clause so a task that goes live between the
+  // check above and this delete is left alone rather than quietly removed.
+  const { count } = await prisma.task.deleteMany({
+    where: {
+      id: taskId,
+      isBacklog: false,
+      status: { notIn: ["COMPLETED", "MISSED"] },
+      plannedStart: { gt: new Date() },
+      clockSessions: { none: {} },
+    },
+  });
+  if (count === 0) return { ok: false, error: DELETE_BLOCKED_MESSAGE };
+
+  revalidatePath("/");
+  return { ok: true };
+}
+
 // Undo a cancel / missed (back to NEW). Display status is re-derived from
-// there; the lock is released only when no time was ever recorded.
+// there; the lock is released only when no time was ever recorded, and a
+// stale completedAt is cleared so it can't leak into a later on-time check.
 export async function reopenTask(taskId: string): Promise<ActionResult> {
   const recorded = await prisma.clockSession.count({ where: { taskId } });
 
   await prisma.task.update({
     where: { id: taskId },
-    data: { status: "NEW", isLocked: recorded > 0 },
+    data: { status: "NEW", isLocked: recorded > 0, completedAt: null },
   });
   revalidatePath("/");
   return { ok: true };

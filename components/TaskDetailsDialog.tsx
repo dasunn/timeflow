@@ -36,6 +36,7 @@ import {
 } from "@/lib/actions/clock";
 import {
   cancelTask,
+  deleteTask,
   markTaskMissed,
   reopenTask,
   setTaskReminder,
@@ -52,7 +53,11 @@ import {
   parseReminderValue,
   REMINDER_CHOICES,
 } from "@/lib/domain/reminders";
-import { computeDisplayStatus, earnedOnTimeAward } from "@/lib/domain/status";
+import {
+  canDeleteTask,
+  computeDisplayStatus,
+  earnedOnTimeAward,
+} from "@/lib/domain/status";
 import {
   dateAtMinutes,
   formatClockDuration,
@@ -116,6 +121,29 @@ export function TaskDetailsDialog({
   // Editing is allowed only before any time is recorded (no clock-ins), and
   // not for tasks in a terminal state.
   const canEdit = !anyClockIn && !isClosed;
+
+  // Permanent deletion, offered only while the task is still ahead of its
+  // planned start. `now` ticks every second, so the option disappears by itself
+  // the moment the task turns PENDING — mirrored server-side in deleteTask.
+  const canDelete = canDeleteTask(task, now, anyClockIn);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  function confirmDelete() {
+    setDeleteError(null);
+    startTransition(async () => {
+      const res = await deleteTask(task.id);
+      if (res.ok) {
+        // The row is gone — close before the refresh so the dialog isn't left
+        // pointing at a task that no longer exists.
+        onClose();
+        router.refresh();
+      } else {
+        setConfirmingDelete(false);
+        setDeleteError(res.error);
+      }
+    });
+  }
 
   // ---- Edit mode ----------------------------------------------------------
   const [editing, setEditing] = useState(false);
@@ -257,6 +285,22 @@ export function TaskDetailsDialog({
                 <PencilIcon />
               </Button>
             )}
+            {canDelete && !editing && (
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                className="text-destructive hover:text-destructive"
+                aria-label="Delete task"
+                title="Delete task"
+                disabled={pending}
+                onClick={() => {
+                  setDeleteError(null);
+                  setConfirmingDelete(true);
+                }}
+              >
+                <Trash2Icon />
+              </Button>
+            )}
             <StatusBadge status={status} />
           </div>
           <DialogDescription>
@@ -361,6 +405,41 @@ export function TaskDetailsDialog({
         ) : (
           /* ---- View mode ---- */
           <>
+            {/* Deleting is permanent and has no undo, so it takes a second
+                click. The task hasn't started yet, so nothing is lost but the
+                plan itself. */}
+            {confirmingDelete && canDelete && (
+              <div className="space-y-2 rounded-md border border-destructive/40 bg-destructive/10 p-2.5">
+                <p className="text-xs text-destructive">
+                  Delete this task permanently? It hasn&apos;t started yet, so
+                  nothing is recorded against it — but this can&apos;t be undone.
+                </p>
+                <div className="flex justify-end gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={pending}
+                    onClick={() => setConfirmingDelete(false)}
+                  >
+                    Keep it
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    disabled={pending}
+                    onClick={confirmDelete}
+                  >
+                    <Trash2Icon />
+                    Delete permanently
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {deleteError && (
+              <p className="text-xs text-destructive">{deleteError}</p>
+            )}
+
             {awarded && (
               <div className="flex items-center gap-1.5 rounded-md bg-emerald-100 px-2 py-1.5 text-xs font-medium text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200">
                 <AwardIcon className="size-4 text-amber-500" />

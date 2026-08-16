@@ -61,3 +61,14 @@ and paste the result into `prisma/turso-schema.sql` (keep its header comment).
   the occurrences must land on the user's local calendar days and the server may
   run in UTC; the action receives concrete windows, caps them at
   `MAX_OCCURRENCES`, and writes them in one transaction.
+- **A task stops being deletable the moment it starts.** Before `plannedStart`
+  the row is pure intention — nothing happened — so `deleteTask` removes it for
+  good. From `plannedStart` on it is part of the day's record and the only exits
+  are cancel and mark-missed; `canDeleteTask` (`lib/domain/status.ts`) draws that
+  line at exactly the point `computeDisplayStatus` starts returning `PENDING`,
+  and also keeps any row touched early (recorded time, or a stated
+  `COMPLETED`/`MISSED` outcome). The details dialog only offers the button while
+  the rule holds, but the server enforces it independently — and re-states it as
+  the `WHERE` clause of the delete, so a task that goes live mid-confirm is left
+  alone. Backlog rows have no start to compare against and keep their own
+  unconditional `deleteBacklogTask`.
