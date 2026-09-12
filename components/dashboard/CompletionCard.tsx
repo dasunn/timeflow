@@ -3,9 +3,10 @@ import {
   CircleAlertIcon,
   CircleCheckIcon,
   CircleDotIcon,
+  TargetIcon,
   TriangleAlertIcon,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import type { DashboardStats } from "@/lib/domain/dashboard";
 import { cn } from "@/lib/utils";
 
@@ -83,24 +84,29 @@ function levelFor(pct: number): Level {
   return "good";
 }
 
+// Matches StatTile's shell so the four cards in the KPI row read as one set.
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <Card className="h-full">
-      <CardHeader>
-        <CardTitle>Task completion</CardTitle>
-      </CardHeader>
-      <CardContent className="flex-1">{children}</CardContent>
+    <Card size="sm" className="gap-0 px-4 py-3.5">
+      <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+        <TargetIcon className="size-3.5" />
+        Task completion
+      </div>
+      {children}
     </Card>
   );
 }
 
-export function CompletionCard({ stats }: { stats: DashboardStats }) {
+// Sits in the KPI row alongside the plain stat tiles rather than in the bento
+// grid below it — the completion rate is a headline figure, and the space it
+// used to occupy now carries the streaks.
+export function CompletionTile({ stats }: { stats: DashboardStats }) {
   const { totalTasks, completedTasks, countableTasks, upcomingTasks } = stats;
 
   if (totalTasks === 0) {
     return (
       <Shell>
-        <p className="text-sm text-muted-foreground">
+        <p className="mt-1.5 text-sm text-muted-foreground">
           No tasks in this period.
         </p>
       </Shell>
@@ -112,7 +118,7 @@ export function CompletionCard({ stats }: { stats: DashboardStats }) {
   if (countableTasks === 0) {
     return (
       <Shell>
-        <p className="text-sm text-muted-foreground">
+        <p className="mt-1.5 text-sm text-muted-foreground">
           Nothing due yet — {upcomingTasks}{" "}
           {upcomingTasks === 1 ? "task is" : "tasks are"} still ahead.
         </p>
@@ -132,50 +138,38 @@ export function CompletionCard({ stats }: { stats: DashboardStats }) {
 
   return (
     <Shell>
-      <div className="flex h-full flex-col">
-        {/* The one hero figure on this page. Proportional figures, not tabular —
-            equal-width digits read loose at display sizes. */}
-        <div className={cn("text-5xl leading-none font-semibold", meta.text)}>
-          {rounded}%
-        </div>
-
-        <div
-          className={cn("mt-2.5 flex items-center gap-1.5 text-sm", meta.text)}
-        >
-          <Icon className="size-4" />
-          <span className="font-medium">{meta.label}</span>
-        </div>
-
-        {/* Meter: fill carries severity, track is a lighter step of the same hue. */}
-        <div
-          className={cn(
-            "mt-3 h-2 w-full overflow-hidden rounded-full",
-            meta.track,
-          )}
-        >
-          <div
-            className={cn("h-full rounded-full", meta.bar)}
-            style={{ width: `${Math.min(100, pct)}%` }}
-          />
-        </div>
-
-        <p className="mt-3 text-sm text-muted-foreground italic">{message}</p>
-
-        <dl className="mt-auto space-y-1.5 border-t pt-3 text-sm">
-          <div className="flex items-baseline justify-between">
-            <dt className="text-muted-foreground">Completed</dt>
-            <dd className="font-medium tabular-nums">
-              {completedTasks} / {countableTasks}
-            </dd>
-          </div>
-          {upcomingTasks > 0 && (
-            <div className="flex items-baseline justify-between">
-              <dt className="text-muted-foreground">Upcoming (not scored)</dt>
-              <dd className="font-medium tabular-nums">{upcomingTasks}</dd>
-            </div>
-          )}
-        </dl>
+      <div
+        className={cn("mt-1.5 text-2xl leading-none font-semibold", meta.text)}
+      >
+        {rounded}%
       </div>
+
+      {/* Meter: fill carries severity, track is a lighter step of the same hue. */}
+      <div
+        className={cn(
+          "mt-2 h-1.5 w-full overflow-hidden rounded-full",
+          meta.track,
+        )}
+      >
+        <div
+          className={cn("h-full rounded-full", meta.bar)}
+          style={{ width: `${Math.min(100, pct)}%` }}
+        />
+      </div>
+
+      <div
+        className={cn("mt-1.5 flex items-center gap-1 text-xs", meta.text)}
+      >
+        <Icon className="size-3.5" />
+        <span className="font-medium">{meta.label}</span>
+        <span className="text-muted-foreground tabular-nums">
+          · {completedTasks}/{countableTasks} done
+        </span>
+      </div>
+
+      <p className="mt-1 truncate text-xs text-muted-foreground italic">
+        {message}
+      </p>
     </Shell>
   );
 }

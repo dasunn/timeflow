@@ -174,3 +174,279 @@
     animation: none;
   }
 }
+/* ---------------------------------------------------------------------------
+   Dashboard "Up next" card motion.
+
+   Both card states paint into an absolutely-positioned, aria-hidden layer
+   rather than onto the card itself: the card already carries a category-tinted
+   gradient, and animating its own background would fight that. The layer also
+   keeps every one of these effects behind the text.
+
+   Colour comes from `--task-color`, set inline per card from the task's
+   category, so one stylesheet rule serves every category.
+   --------------------------------------------------------------------------- */
+
+/* RUNNING — abstract waves drifting inside the card. Three blobs with uneven
+   border-radii rotate and drift at different speeds; because the radii are
+   asymmetric, the rotation reads as a slow liquid swell rather than a spin. */
+@keyframes task-wave-drift {
+  0% {
+    transform: translate3d(-14%, 4%, 0) rotate(0deg) scale(1);
+  }
+  50% {
+    transform: translate3d(14%, -6%, 0) rotate(180deg) scale(1.18);
+  }
+  100% {
+    transform: translate3d(-14%, 4%, 0) rotate(360deg) scale(1);
+  }
+}
+
+/* A single highlight sweeping across the card — the "scanning" read that keeps
+   the waves from looking like an idle gradient. */
+@keyframes task-scan {
+  0% {
+    transform: translateX(-140%) skewX(-18deg);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(240%) skewX(-18deg);
+    opacity: 0;
+  }
+}
+
+.task-waves {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.task-wave {
+  position: absolute;
+  bottom: -60%;
+  width: 70%;
+  /* Square via aspect-ratio so the blob stays circular-ish at any card width. */
+  aspect-ratio: 1;
+  border-radius: 42% 58% 55% 45% / 48% 42% 58% 52%;
+  background: radial-gradient(
+    circle at 30% 30%,
+    color-mix(in oklab, var(--task-color) 55%, transparent),
+    transparent 70%
+  );
+  filter: blur(2px);
+  animation: task-wave-drift 9s ease-in-out infinite;
+}
+
+.task-wave:nth-child(1) {
+  left: -12%;
+  opacity: 0.5;
+}
+.task-wave:nth-child(2) {
+  left: 28%;
+  opacity: 0.34;
+  animation-duration: 13s;
+  animation-delay: -4s;
+  border-radius: 55% 45% 38% 62% / 42% 58% 42% 58%;
+}
+.task-wave:nth-child(3) {
+  left: 62%;
+  opacity: 0.24;
+  animation-duration: 17s;
+  animation-delay: -9s;
+  border-radius: 38% 62% 58% 42% / 55% 48% 52% 45%;
+}
+
+.task-scan {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 28%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--task-color) 30%, transparent),
+    transparent
+  );
+  animation: task-scan 4.5s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+/* PENDING — start time passed with no clock-in. A red flash, deliberately the
+   one alarming animation on the page. */
+@keyframes pending-flash {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.task-pending-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    120% 100% at 0% 50%,
+    rgba(239, 68, 68, 0.3),
+    rgba(239, 68, 68, 0.08) 60%,
+    transparent
+  );
+  box-shadow: inset 0 0 0 2px rgba(239, 68, 68, 0.55);
+  animation: pending-flash 1.15s ease-in-out infinite;
+}
+
+/* ---------------------------------------------------------------------------
+   Header clock. Idle it is a plain readout; every 12-40s the component swaps in
+   one of these classes for a beat (see DigitalClock.tsx).
+   --------------------------------------------------------------------------- */
+@keyframes clock-glitch {
+  0%,
+  100% {
+    transform: none;
+    text-shadow: none;
+  }
+  20% {
+    transform: translateX(-1.5px);
+    text-shadow: 1.5px 0 var(--chart-4), -1.5px 0 var(--chart-2);
+  }
+  40% {
+    transform: translateX(1.5px);
+    text-shadow: -1.5px 0 var(--chart-4), 1.5px 0 var(--chart-2);
+  }
+  60% {
+    transform: translateX(-1px) skewX(-3deg);
+    text-shadow: 1px 0 var(--chart-5), -1px 0 var(--chart-2);
+  }
+  80% {
+    transform: translateX(0.5px);
+    text-shadow: none;
+  }
+}
+
+@keyframes clock-sweep {
+  0% {
+    background-position: -160% 0;
+  }
+  100% {
+    background-position: 260% 0;
+  }
+}
+
+@keyframes clock-pop {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.09);
+    letter-spacing: 0.04em;
+  }
+}
+
+@keyframes clock-hue {
+  0%,
+  100% {
+    color: inherit;
+  }
+  50% {
+    color: var(--primary);
+  }
+}
+
+.clock-fx-glitch {
+  animation: clock-glitch 0.75s steps(2, end) 2;
+}
+
+/* The sweep paints a moving highlight through the glyphs themselves, so it
+   needs the text clipped to the gradient for the duration of the effect. */
+.clock-fx-sweep {
+  background-image: linear-gradient(
+    100deg,
+    currentColor 38%,
+    var(--primary) 50%,
+    currentColor 62%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: clock-sweep 1.5s ease-in-out 1;
+}
+
+.clock-fx-pop {
+  animation: clock-pop 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) 1;
+}
+
+.clock-fx-hue {
+  animation: clock-hue 1.6s ease-in-out 1;
+}
+
+/* ---------------------------------------------------------------------------
+   Streaks. The shimmer rewards an alive streak; the ember glow marks one that
+   still needs today's entry.
+   --------------------------------------------------------------------------- */
+@keyframes streak-shimmer {
+  0% {
+    background-position: -140% 0;
+  }
+  100% {
+    background-position: 240% 0;
+  }
+}
+
+.streak-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 65%
+  );
+  background-size: 220% 100%;
+  animation: streak-shimmer 2.6s ease-in-out infinite;
+}
+
+@keyframes streak-ember {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--streak-color) 45%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+}
+
+.streak-ember {
+  animation: streak-ember 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .task-wave,
+  .task-scan,
+  .task-pending-flash,
+  .streak-shimmer::after,
+  .streak-ember,
+  .clock-fx-glitch,
+  .clock-fx-sweep,
+  .clock-fx-pop,
+  .clock-fx-hue {
+    animation: none;
+  }
+  /* The flash layer conveys state, so keep it visible — just stop it blinking. */
+  .task-pending-flash {
+    opacity: 1;
+  }
+  .clock-fx-sweep {
+    background-image: none;
+    color: inherit;
+  }
+}

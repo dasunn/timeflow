@@ -57,7 +57,10 @@ export async function getStreaks(): Promise<StreakWithEntries[]> {
   });
 }
 
-// The next few tasks still ahead of `now`, for the dashboard's Upcoming card.
+// The next few tasks not yet FINISHED, for the dashboard's Upcoming card. The
+// bound is the planned END, not the start: a task that has begun is exactly
+// what you want the card showing, and cutting at `plannedStart` made it vanish
+// at the moment it became relevant.
 // Deliberately NOT bound to the dashboard's period filter — "what's next" is
 // only useful when it can look past the end of the selected window — but it
 // does honour the category filter so the whole page stays consistent.
@@ -74,7 +77,7 @@ export async function getUpcomingTasks({
     where: {
       ...SCHEDULED,
       status: { notIn: ["CANCELLED", "COMPLETED", "MISSED"] },
-      plannedStart: { gt: now },
+      plannedEnd: { gt: now },
       ...(categoryId ? { categoryId } : {}),
     },
     include: {
