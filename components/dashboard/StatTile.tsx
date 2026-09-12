@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import { CalendarClockIcon, CircleCheckIcon, TimerIcon } from "lucide-react";
+import { CompletionTile } from "@/components/dashboard/CompletionCard";
 import { Card } from "@/components/ui/card";
 import type { DashboardStats } from "@/lib/domain/dashboard";
 import { formatDuration } from "@/lib/domain/time";
@@ -38,8 +39,10 @@ function StatTile({
 export function KpiRow({ stats }: { stats: DashboardStats }) {
   const { completedTasks, countableTasks, upcomingTasks, actualMs } = stats;
 
+  // Four across from lg up — the completion rate joined this row so the space
+  // it held in the bento grid below could go to the streaks.
   return (
-    <div className="grid min-w-0 gap-3 sm:grid-cols-3">
+    <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-4">
       <StatTile
         icon={CircleCheckIcon}
         label="Completed"
@@ -58,6 +61,7 @@ export function KpiRow({ stats }: { stats: DashboardStats }) {
         value={String(upcomingTasks)}
         hint="not yet due"
       />
+      <CompletionTile stats={stats} />
     </div>
   );
 }

@@ -17,6 +17,12 @@ export function isDashboardPeriod(value: string): value is DashboardPeriod {
   return (DASHBOARD_PERIODS as readonly string[]).includes(value);
 }
 
+// What the dashboard shows with no `period` in the URL. Named rather than
+// repeated because the page and the filter control must agree — if the page
+// defaulted to one period and the <select> displayed another, the first render
+// would show the wrong control state.
+export const DEFAULT_DASHBOARD_PERIOD: DashboardPeriod = "today";
+
 // "YYYY-MM" -> the 1st of that month (local time). Falls back to `now` on
 // anything unparseable so a malformed URL param never throws.
 function parseMonthParam(value: string, now: Date): Date {
